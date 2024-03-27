@@ -84,5 +84,5 @@ echo "$(wc -l s3file.txt | cut -d' ' -f1) files to process"
 # for each accession (represented as a s3 path), do the task (e.g. copy)
 for s3elt in $(cat s3file.txt)
 do
-	task $s3elt
+	task $s3elt $OUTBUCKET
 done

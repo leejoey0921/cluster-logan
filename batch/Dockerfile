@@ -27,6 +27,12 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
     unzip awscliv2.zip &&\
     ./aws/install
 
+# palmscan
+RUN aws s3 cp s3://serratus-rayan/tools/palmscan2 /usr/local/bin --no-sign-request && chmod +x /usr/local/bin/palmscan2
+
+# (for local testing ; will be already mounted in Batch production)
+RUN mkdir -p /localdisk
+
 # Copy Scripts
 COPY logan-analysis.sh /
 RUN mkdir /tasks
