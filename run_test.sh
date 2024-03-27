@@ -7,6 +7,6 @@ mv set set.bak && echo "test-array" > set
 
 bash -c "cd batch && bash deploy-docker.sh"
 
-bash process_array.sh serratus-rayan-batchops-paris LoganAnalysisJobQueueDisques 
+bash process_array.sh serratus-rayan-batchops-paris 1
 
 rm -f sets/test-array && mv set.bak set

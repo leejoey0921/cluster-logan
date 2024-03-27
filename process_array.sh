@@ -1,14 +1,15 @@
 #!/bin/bash -e
 
 outputbucket=$1
-jobqueue=$2
+jobqueue=LoganAnalysisJobQueueDisques
+nbsplit=$2
 dryrun=$3
 
-JOBTIMEOUT=3600 # 1 hour max per job
+JOBTIMEOUT=20000 # 6 hour max per job, aiming at > 35 GB/hour processed by core, should be around 140 GB/s when all alone
 
 # Check if an argument is provided
-if [ $# -lt 2 ]; then
-    echo "Missing arguments, need \$1 for bucket and \$2 for jobqueue. Exiting."
+if [ $# -lt 1 ]; then
+    echo "Missing arguments, need \$1 for output bucket. Exiting."
     exit 1
 fi
 
@@ -19,7 +20,6 @@ fi
 # stores the job array .txt files
 arraybucket=$(if [[ -z $(aws sts get-caller-identity |grep serratus-rayan) ]]; then echo "logan-dec2023-testbucket"; else echo "logan-testing-march2024"; fi)
 arrayfolder=logan-analysis-jobarray
-nbCE=1
 
 set=$(cat set)
 date=$(date +"%b%d-%Y")
@@ -42,42 +42,37 @@ split_and_upload() {
     size=1c
 
 	# Split the file and upload each part
-	split -d -n l/$nbCE $file array_${size}_part_
+	split -d -n l/$nbsplit $file array_${size}_part_
 	nb_parts=$(ls array_${size}_part_*  2>/dev/null | wc -l)
-	if [ "$nb_parts" -gt $nbCE ]; then
-		echo "warning! more array jobs ($nb_parts) than the number of queues/CEs ($nbCE)"
+	if [ "$nb_parts" -gt $nbsplit ]; then
+        echo "error: more array jobs ($nb_parts) than the number asked to split ($nbsplit)"
 		exit 1
 	fi
 	for part in array_${size}_part_*; do
 	    part_lines=$(wc -l < $part)
 	    if [ "$part_lines" -gt 10000 ]; then
-		echo "warning! array job ($part) has more jobs ($part_lines) than allowed (10000)"
-		exit 1
+		    echo "error: array job ($part) has more jobs ($part_lines) than allowed (10000)"
+    		exit 1
 	    fi
 	done
 	for part in array_${size}_part_*; do
-	    part_lines=$(wc -l < $part)
-	    suffix="${part##*_}"
-	    # proper suffix for the job queue
-	    suffix=$((10#$suffix))
-	    #jq=$jobqueue$suffix
 	    if [ -n "$dryrun" ]; then
-		echo "dry run, not executing array_submit_job for $part to job queue $jq"
+		    echo "dry run, not executing array_submit_job for $part to job queue $jq"
 	    else
-		s3file=s3://$arraybucket/$arrayfolder/$part"_"$timestamp
-		aws s3 cp $part $s3file
-		aws batch submit-job \
-		    --job-name $tag \
-		    --job-definition $jobdef  \
-		    --job-queue  $jobqueue \
-		    --timeout attemptDurationSeconds="$JOBTIMEOUT" \
-		    --parameters s3file="$s3file",outputbucket="$outputbucket" \
-		    --container-overrides '{
-		      "command": [
-			"-i", "Ref::s3file",
-			"-o", "Ref::outputbucket"
-		      ]}'
-		echo "array job submitted! ($s3file)"
+            s3file=s3://$arraybucket/$arrayfolder/$part"_"$timestamp
+            aws s3 cp $part $s3file
+            aws batch submit-job \
+                --job-name $tag \
+                --job-definition $jobdef  \
+                --job-queue  $jobqueue \
+                --timeout attemptDurationSeconds="$JOBTIMEOUT" \
+                --parameters s3file="$s3file",outputbucket="$outputbucket" \
+                --container-overrides '{
+                  "command": [
+                "-i", "Ref::s3file",
+                "-o", "Ref::outputbucket"
+                  ]}'
+            echo "array job submitted! ($s3file)"
 		fi
 	done
 }

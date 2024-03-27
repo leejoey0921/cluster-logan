@@ -25,7 +25,8 @@ Parameters:
   InstanceTypes:
     Description: EC2 instance types
     Type: List<String>
-    Default: "c5d.4xlarge,c5d.9xlarge,c5d.12xlarge,c5d.18xlarge,c5d.24xlarge,c5d.metal"
+    #Default: "c5d.4xlarge,c5d.9xlarge,c5d.12xlarge,c5d.18xlarge,c5d.24xlarge,c5d.metal"
+    Default: "c5d"
   Minvcpus:
     Type: Number
     Default: 0

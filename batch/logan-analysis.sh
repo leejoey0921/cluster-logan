@@ -75,6 +75,7 @@ source tasks/$task.sh
 
 echo "Logan analysis, task: $task"
 date
+df -h / /localdisk
 
 # grab the list of accessions
 aws s3 cp $S3FILE s3file.txt --quiet
