@@ -6,9 +6,9 @@ Adapted from https://github.com/ababaian/logan
 
 ## Running in production
 
-1) run spinupd.sh to deploy the CloudFormation template
+1) run `spinupd.sh` to deploy the CloudFormation template
 
-2) run deploy-docker.sh
+2) run `deploy-docker.sh`
 
 3) put your list of accessions in `set` file
 
