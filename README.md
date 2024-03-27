@@ -1,4 +1,4 @@
-# Logan-analsis
+# Logan-analsis
 
 System to analyze Logan unitigs/contigs at scale with AWS Batch.
 
@@ -14,10 +14,12 @@ Adapted from https://github.com/ababaian/logan
 
 4) run `process_array.sh`
 
-## Running a test
+
+## Running a test
 
 run `test_docker.sh`
 
-## Cleanup
+
+## Cleanup
 
 Manually delete the CloudFormation stack. Also delete the ECR image. 
