@@ -60,7 +60,7 @@ split_and_upload() {
         MAYBEDRY="echo "
     fi
     s3folder=s3://$arraybucket/$arrayfolder/$partfolder
-    $MAYBEDRY s5cmd cp -p $partfolder"*" $s3folder
+    $MAYBEDRY s5cmd cp --sp $partfolder"*" $s3folder
     s3files=$s3folder
     ARRAYPROP=""
     ARRAYPROP2=""
