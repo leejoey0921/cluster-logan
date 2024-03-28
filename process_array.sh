@@ -60,13 +60,13 @@ split_and_upload() {
         MAYBEDRY="echo "
     fi
     s3folder=s3://$arraybucket/$arrayfolder/$partfolder
-    $MAYBEDRY aws s3 cp $partfolder $s3folder --recursive
+    $MAYBEDRY s5cmd cp -p $partfolder"*" $s3folder
     s3files=$s3folder
     ARRAYPROP=""
     ARRAYPROP2=""
     if [[ "$nb_parts" -gt 1 ]]; then
         echo "This is a job array:"
-        find $partfolder -type f | head 
+        wc -l "$partfolder"* | head 
         if [[ "$nb_parts" -gt 5 ]]; then
             echo "..."
         fi

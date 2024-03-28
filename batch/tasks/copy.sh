@@ -40,29 +40,36 @@ task() {
     mkdir -p /localdisk/"$accession"
     cd /localdisk/"$accession" || exit
    
-    echo "Downloading accession $accession"
-    if ! \time s5cmd cp -c 1 "$s3file" "$filename" ; then
-        return 1  # This ensures the error trap is triggered if aws s3 cp fails.
-    fi
-
     echo "$filename"
     # also opportunistically run palmscan on contigs
     if [[ "$filename" == *"contigs"* ]]; then
+        folder="c"
+        echo "Downloading accession $accession"
+        if ! \time s5cmd cp -c 1 "$s3file" "$filename" ; then
+            return 1  # This ensures the error trap is triggered if s3 cp fails.
+        fi
+
         zstd -d -c $filename > $filename_noz
         if ! palmscan2 -search_pssms $filename_noz -tsv "$filename_noz".hits.tsv -threads 1; then
             return 1  # Trigger error handling if palmscan2 fails.
         fi
         s5cmd cp -c 1 "$filename_noz".hits.tsv s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
-        folder="c"
+
+        echo "Uploading accession $accession"
+        if ! \time s5cmd cp -c 1 "$filename" s3://"$outbucket"/"$folder"/"$accession"/; then
+            return 1  # Trigger error handling if s3 cp fails.
+        fi
     else
         folder="u"
+        # for unitigs: don't even download locally, do a server-side copy
+        clean_path="${s3file#s3://}"
+        if ! \time rclone copy aws:$clean_path aws:"$outbucket"/"$folder"/"$accession"/ --s3-use-already-exists 0 -v; then
+            return 1  # Trigger error handling if s3 cp fails.
+        fi
+
     fi
 
-    echo "Uploading accession $accession"
-    if ! \time s5cmd cp -c 1 "$filename" s3://"$outbucket"/"$folder"/"$accession"/; then
-        return 1  # Trigger error handling if aws s3 cp fails.
-    fi
-    
+   
     rm -Rf /localdisk/"$accession"
     echo "Done with $accession"
     trap '' EXIT

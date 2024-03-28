@@ -37,6 +37,14 @@ RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linu
   rm s5cmd_2.2.2_Linux-64bit.tar.gz &&\
   mv s5cmd  /usr/local/bin
 
+# rclone
+RUN wget https://downloads.rclone.org/v1.66.0/rclone-v1.66.0-linux-amd64.zip && \
+ unzip rclone-v1.66.0-linux-amd64.zip && \
+ rm rclone-v1.66.0-linux-amd64.zip && \
+ mv rclone-v1.66.0-linux-amd64/rclone /usr/local/bin/rclone
+RUN mkdir -p /root/.config/rclone/
+COPY rclone.conf /root/.config/rclone
+
 # (for local testing ; will be already mounted in Batch production)
 RUN mkdir -p /localdisk
 

@@ -89,3 +89,7 @@ for s3elt in $(cat s3file.txt)
 do
 	task $s3elt $OUTBUCKET
 done
+
+echo "Logan analysis, all done!"
+date
+df -h / /localdisk
