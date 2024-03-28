@@ -18,10 +18,11 @@ LABEL tags="logan"
 # Update Core
 RUN yum -y update
 RUN yum -y install bash wget time unzip zstd \
-           which sudo jq 
+           which sudo jq tar 
 RUN python3 -m ensurepip
 
 # AWS S3
+ENV PIP_ROOT_USER_ACTION=ignore
 RUN pip3 install boto3
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" &&\
     unzip awscliv2.zip &&\
@@ -29,6 +30,12 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 
 # palmscan
 RUN aws s3 cp s3://serratus-rayan/tools/palmscan2 /usr/local/bin --no-sign-request && chmod +x /usr/local/bin/palmscan2
+
+# s5cmd
+RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linux-64bit.tar.gz &&\
+  tar xf s5cmd_2.2.2_Linux-64bit.tar.gz &&\
+  rm s5cmd_2.2.2_Linux-64bit.tar.gz &&\
+  mv s5cmd  /usr/local/bin
 
 # (for local testing ; will be already mounted in Batch production)
 RUN mkdir -p /localdisk

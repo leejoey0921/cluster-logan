@@ -36,12 +36,12 @@ task() {
     filename=$(echo $s3file | awk -F/ '{print $NF}')
     accession=$(echo $filename | cut -d '.' -f1)
     filename_noz=${filename%.*}
-    echo "accession: $accession"
 
     mkdir -p /localdisk/"$accession"
     cd /localdisk/"$accession" || exit
-    
-    if ! aws s3 cp "$s3file" "$filename" --quiet; then
+   
+    echo "Downloading accession $accession"
+    if ! \time s5cmd cp -c 1 "$s3file" "$filename" ; then
         return 1  # This ensures the error trap is triggered if aws s3 cp fails.
     fi
 
@@ -52,13 +52,14 @@ task() {
         if ! palmscan2 -search_pssms $filename_noz -tsv "$filename_noz".hits.tsv -threads 1; then
             return 1  # Trigger error handling if palmscan2 fails.
         fi
-        aws s3 cp "$filename_noz".hits.tsv s3://serratus-rayan/logan_palmscan_contigs/"$accession"/ --quiet
+        s5cmd cp -c 1 "$filename_noz".hits.tsv s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
         folder="c"
     else
         folder="u"
     fi
 
-    if ! aws s3 cp "$filename" s3://"$outbucket"/"$folder"/"$accession"/ --quiet; then
+    echo "Uploading accession $accession"
+    if ! \time s5cmd cp -c 1 "$filename" s3://"$outbucket"/"$folder"/"$accession"/; then
         return 1  # Trigger error handling if aws s3 cp fails.
     fi
     

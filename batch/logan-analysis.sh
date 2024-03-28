@@ -78,7 +78,7 @@ date
 df -h / /localdisk
 
 # grab the list of accessions
-aws s3 cp $S3FILE s3file.txt --quiet
+s5cmd cp -c 1 $S3FILE s3file.txt
 echo "$(wc -l s3file.txt | cut -d' ' -f1) files to process"
 
 # for each accession (represented as a s3 path), do the task (e.g. copy)
