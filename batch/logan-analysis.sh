@@ -31,13 +31,6 @@ function log () {
     fi
 }
 
-# Check if Array Job
-if [[ -z "${AWS_BATCH_JOB_ARRAY_INDEX-}" ]]
-then
-  log "Checking Array Job"
-  AWS_BATCH_JOB_ARRAY_INDEX='n/a'
-fi
-
 while getopts i:o:vh FLAG; do
   case $FLAG in
     # Search Files  -----------
@@ -76,6 +69,16 @@ source tasks/$task.sh
 echo "Logan analysis, task: $task"
 date
 df -h / /localdisk
+
+# Check if Array Job
+if [[ -z "${AWS_BATCH_JOB_ARRAY_INDEX-}" ]]
+then
+    echo "Not an array job"
+else
+    echo "Array job: ${AWS_BATCH_JOB_ARRAY_INDEX-}"
+    printf -v padded_number "%05d" ${AWS_BATCH_JOB_ARRAY_INDEX-}
+    S3FILE="$S3FILE"$padded_number
+fi
 
 # grab the list of accessions
 s5cmd cp -c 1 $S3FILE s3file.txt

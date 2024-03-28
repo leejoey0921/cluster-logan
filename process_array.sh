@@ -19,7 +19,7 @@ fi
 
 # stores the job array .txt files
 arraybucket=$(if [[ -z $(aws sts get-caller-identity |grep serratus-rayan) ]]; then echo "logan-dec2023-testbucket"; else echo "logan-testing-march2024"; fi)
-arrayfolder=logan-analysis-jobarray
+arrayfolder=logan-analysis-jobarrays
 
 set=$(cat set)
 date=$(date +"%b%d-%Y")
@@ -42,39 +42,55 @@ split_and_upload() {
     size=1c
 
 	# Split the file and upload each part
-	split -d -n l/$nbsplit $file array_${size}_part_
-	nb_parts=$(ls array_${size}_part_*  2>/dev/null | wc -l)
+    partfolder=array_${size}_$timestamp/
+    mkdir -p $partfolder
+	split -a 5 -d -n l/$nbsplit $file $partfolder
+	nb_parts=$(ls "$partfolder"*  2>/dev/null | wc -l)
 	if [ "$nb_parts" -gt $nbsplit ]; then
         echo "error: more array jobs ($nb_parts) than the number asked to split ($nbsplit)"
 		exit 1
 	fi
-	for part in array_${size}_part_*; do
-	    part_lines=$(wc -l < $part)
-	    if [ "$part_lines" -gt 10000 ]; then
-		    echo "error: array job ($part) has more jobs ($part_lines) than allowed (10000)"
-    		exit 1
-	    fi
-	done
-	for part in array_${size}_part_*; do
-	    if [ -n "$dryrun" ]; then
-		    echo "dry run, not executing array_submit_job for $part to job queue $jq"
-	    else
-            s3file=s3://$arraybucket/$arrayfolder/$part"_"$timestamp
-            aws s3 cp $part $s3file
-            aws batch submit-job \
+    if [ "$nb_parts" -gt 10000 ]; then
+        echo "error: array job has more jobs ($nb_parts) than allowed (10000)"
+        exit 1
+    fi
+    MAYBEDRY=""
+    if [ -n "$dryrun" ]; then
+	    echo "dry run, not executing array_submit_job for $nb_parts parts to job queue $jobqueue"
+        MAYBEDRY="echo "
+    fi
+    s3folder=s3://$arraybucket/$arrayfolder/$partfolder
+    $MAYBEDRY aws s3 cp $partfolder $s3folder --recursive
+    s3files=$s3folder
+    ARRAYPROP=""
+    ARRAYPROP2=""
+    if [[ "$nb_parts" -gt 1 ]]; then
+        echo "This is a job array:"
+        find $partfolder -type f | head 
+        if [[ "$nb_parts" -gt 5 ]]; then
+            echo "..."
+        fi
+        ARRAYPROP="--array-properties"                                                                                                            
+        ARRAYPROP2="{ \"size\": $nb_parts }"
+    else
+        s3files=s3://$arraybucket/$arrayfolder/$(find $partfolder -type f)
+    fi
+
+    $MAYBEDRY aws batch submit-job \
                 --job-name $tag \
                 --job-definition $jobdef  \
                 --job-queue  $jobqueue \
+                $ARRAYPROP "$ARRAYPROP2" \
                 --timeout attemptDurationSeconds="$JOBTIMEOUT" \
-                --parameters s3file="$s3file",outputbucket="$outputbucket" \
+                --parameters s3files="$s3files",outputbucket="$outputbucket" \
                 --container-overrides '{
                   "command": [
-                "-i", "Ref::s3file",
+                "-i", "Ref::s3files",
                 "-o", "Ref::outputbucket"
                   ]}'
-            echo "array job submitted! ($s3file)"
-		fi
-	done
+    echo "array job submitted! ($s3files)"
+
+    rm -Rf $partfolder
 }
 
 OneCoreJob=logan-analysis-1c-job
@@ -83,4 +99,3 @@ OneCoreJob=logan-analysis-1c-job
 echo "Submitting to JobQueue: $jobqueue"
 [ -f array_1c.txt  ] && split_and_upload array_1c.txt $OneCoreJob "$jobqueue" "$dryrun"
 
-rm -f array_*
