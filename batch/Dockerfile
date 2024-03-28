@@ -31,6 +31,12 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 # palmscan
 RUN aws s3 cp s3://serratus-rayan/tools/palmscan2 /usr/local/bin --no-sign-request && chmod +x /usr/local/bin/palmscan2
 
+# transeq
+RUN wget https://github.com/feliixx/gotranseq/releases/download/v0.4.0/gotranseq_0.4.0_Linux_x86_64.tar.gz && \
+    tar xf gotranseq_0.4.0_Linux_x86_64.tar.gz && \
+    rm gotranseq_0.4.0_Linux_x86_64.tar.gz && \
+    mv gotranseq /usr/local/bin/
+
 # s5cmd
 RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linux-64bit.tar.gz &&\
   tar xf s5cmd_2.2.2_Linux-64bit.tar.gz &&\

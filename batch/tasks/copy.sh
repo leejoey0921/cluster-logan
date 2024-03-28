@@ -36,6 +36,7 @@ task() {
     filename=$(echo $s3file | awk -F/ '{print $NF}')
     accession=$(echo $filename | cut -d '.' -f1)
     filename_noz=${filename%.*}
+    filename_trans=$filename_noz.transeq
 
     mkdir -p /localdisk/"$accession"
     cd /localdisk/"$accession" || exit
@@ -49,11 +50,13 @@ task() {
             return 1  # This ensures the error trap is triggered if s3 cp fails.
         fi
 
-        zstd -d -c $filename > $filename_noz
-        if ! palmscan2 -search_pssms $filename_noz -tsv "$filename_noz".hits.tsv -threads 1; then
+        \time zstd -d -c $filename > $filename_noz
+        \time gotranseq --sequence $filename_noz --outseq $filename_trans --frame 6 -n 1
+        if ! \time palmscan2 -search_pssms $filename_trans -tsv "$filename_trans".hits.tsv -min_palm_score 5.0 -fasta "$filename_trans".pps.fa -threads 1; then
             return 1  # Trigger error handling if palmscan2 fails.
         fi
-        s5cmd cp -c 1 "$filename_noz".hits.tsv s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
+        s5cmd cp -c 1 "$filename_trans".hits.tsv s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
+        s5cmd cp -c 1 "$filename_trans".pps.fa   s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
 
         echo "Uploading accession $accession"
         if ! \time s5cmd cp -c 1 "$filename" s3://"$outbucket"/"$folder"/"$accession"/; then

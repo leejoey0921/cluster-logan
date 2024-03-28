@@ -4,6 +4,9 @@
 # =====================================
 set -eu
 
+# modify me
+task=copy
+
 # Usage
 function usage {
   echo ""
@@ -63,7 +66,6 @@ if [ -z "$OUTBUCKET" ]; then
   usage
 fi
 
-task=copy
 source tasks/$task.sh
 
 echo "Logan analysis, task: $task"
