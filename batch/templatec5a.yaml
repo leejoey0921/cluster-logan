@@ -1,5 +1,4 @@
-# adapted from https://github.com/aws-samples/aws-batch-blueprints/blob/main/templates/batch-jq-ce-lt-local-ssd.yaml
-# for Logan with c5d instances
+# adapted from c5d template but here for c5a, no local disk
 #
 #
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -25,8 +24,7 @@ Parameters:
   InstanceTypes:
     Description: EC2 instance types
     Type: List<String>
-    #Default: "c5d.4xlarge,c5d.9xlarge,c5d.12xlarge,c5d.18xlarge,c5d.24xlarge,c5d.metal"
-    Default: "c5d"
+    Default: "c5a"
   Minvcpus:
     Type: Number
     Default: 0
@@ -43,7 +41,7 @@ Parameters:
 ############################
 ## AWS Batch Infrastructure
 Resources:
-  BatchInstanceRole:
+  BatchInstanceRoleC5A:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -60,7 +58,7 @@ Resources:
       - arn:aws:iam::aws:policy/AmazonElasticMapReduceFullAccess # for sdb
       - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore # for connecting to instance
       - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy # for https://github.com/aws-samples/aws-batch-blueprints/blob/main/templates/batch-jq-ce-lt-detailed-monitoring.yaml
-  BatchInstancePolicy: # from https://github.com/aws-samples/aws-batch-blueprints/blob/main/templates/batch-jq-ce-lt-ebs-resize.yaml
+  BatchInstancePolicyC5A: # from https://github.com/aws-samples/aws-batch-blueprints/blob/main/templates/batch-jq-ce-lt-ebs-resize.yaml
     Type: AWS::IAM::Policy
     Properties:
       PolicyName: !Sub 'BatchInstancePolicy-${AWS::StackName}'
@@ -68,23 +66,18 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - ec2:CreateVolume
-              - ec2:AttachVolume
-              - ec2:ModifyVolume
-              - ec2:DescribeVolumes
-              - ec2:DescribeVolumesModifications
               - ec2:ModifyInstanceAttribute
               - logs:CreateLogGroup # for awslogs
               - dynamodb:UpdateItem
             Resource:
               - '*'
       Roles:
-        - !Ref BatchInstanceRole
-  BatchInstanceProfile:
+        - !Ref BatchInstanceRoleC5A
+  BatchInstanceProfileC5A:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-      - Ref: BatchInstanceRole
+      - Ref: BatchInstanceRoleC5A
   SpotIamFleetRole: # taken from https://github.com/aodn/aws-wps/blob/master/wps-cloudformation-template.yaml
     Type: AWS::IAM::Role
     Properties:
@@ -102,7 +95,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
 
-  BatchLaunchTemplateDisques:
+  BatchLaunchTemplateC5A:
     Type: 'AWS::EC2::LaunchTemplate'
     Properties:
       LaunchTemplateData:
@@ -127,153 +120,107 @@ Resources:
 
                 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
-                yum install -y jq mdadm
-
-                MOUNT_POINT="/localdisk"
-                mkdir -p $MOUNT_POINT
-
-                devices=`lsblk -o NAME -p -J | jq -r '.blockdevices[] | select(has("children") | not) | .name'`
-                nb_devices=`echo $devices | tr ' ' '\n' | wc -l`
-
-                if [[ $nb_devices > 1 ]]; then
-                  yes | mdadm --create --verbose /dev/md0 --level=0 --raid-devices=$nb_devices $devices
-                  mkfs.xfs /dev/md0
-                  mount /dev/md0 $MOUNT_POINT
-                else
-                  mkfs.xfs $devices
-                  mount $devices $MOUNT_POINT
-                fi
-
-                # brice's trick
-                sysctl vm.dirty_writeback_centisecs=200
-                sysctl vm.dirty_bytes=4294967296
-                sysctl vm.dirty_background_bytes=2147483648
+                echo "nothing in userdata"
             
                 --==MYBOUNDARY==--
 
-  BatchECSCED:
+  CENODISK:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       Type: MANAGED
       ComputeResources:
         AllocationStrategy: SPOT_PRICE_CAPACITY_OPTIMIZED
         LaunchTemplate:
-            LaunchTemplateId: !Ref BatchLaunchTemplateDisques
-            Version: !GetAtt BatchLaunchTemplateDisques.LatestVersionNumber
+            LaunchTemplateId: !Ref BatchLaunchTemplateC5A
+            Version: !GetAtt BatchLaunchTemplateC5A.LatestVersionNumber
         MinvCpus: !Ref Minvcpus
         MaxvCpus: !Ref Maxvcpus
         Type: SPOT 
         InstanceRole:
-          Ref: BatchInstanceProfile
+          Ref: BatchInstanceProfileC5A
         InstanceTypes: !Ref InstanceTypes
         ImageId: ami-09f62d2604cc5b8fe # my custom Logan AMI (has awscliv2, mdadm) 
         Ec2KeyPair: "serratus"
         SpotIamFleetRole: !Ref SpotIamFleetRole
         Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
         Tags:
-          Name: Logan-Analysis-SPOTD-1
+          Name: Logan-Analysis-SPOTC5A-1
         SecurityGroupIds:
         - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
       ReplaceComputeEnvironment: false
       State: ENABLED
 
-  BatchECSCED2:
+  CENODISK2:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       Type: MANAGED
       ComputeResources:
         AllocationStrategy: SPOT_PRICE_CAPACITY_OPTIMIZED
         LaunchTemplate:
-            LaunchTemplateId: !Ref BatchLaunchTemplateDisques
-            Version: !GetAtt BatchLaunchTemplateDisques.LatestVersionNumber
+            LaunchTemplateId: !Ref BatchLaunchTemplateC5A
+            Version: !GetAtt BatchLaunchTemplateC5A.LatestVersionNumber
         MinvCpus: !Ref Minvcpus
         MaxvCpus: !Ref Maxvcpus
         Type: SPOT 
         InstanceRole:
-          Ref: BatchInstanceProfile
+          Ref: BatchInstanceProfileC5A
         InstanceTypes: !Ref InstanceTypes
         ImageId: ami-09f62d2604cc5b8fe # my custom Logan AMI (has awscliv2, mdadm) 
         Ec2KeyPair: "serratus"
         SpotIamFleetRole: !Ref SpotIamFleetRole
         Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
         Tags:
-          Name: Logan-Analysis-SPOTD-2
+          Name: Logan-Analysis-SPOTC5A-2
         SecurityGroupIds:
         - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
       ReplaceComputeEnvironment: false
       State: ENABLED
 
-  BatchECSCED3:
+  CENODISK3:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       Type: MANAGED
       ComputeResources:
         AllocationStrategy: SPOT_PRICE_CAPACITY_OPTIMIZED
         LaunchTemplate:
-            LaunchTemplateId: !Ref BatchLaunchTemplateDisques
-            Version: !GetAtt BatchLaunchTemplateDisques.LatestVersionNumber
+            LaunchTemplateId: !Ref BatchLaunchTemplateC5A
+            Version: !GetAtt BatchLaunchTemplateC5A.LatestVersionNumber
         MinvCpus: !Ref Minvcpus
         MaxvCpus: !Ref Maxvcpus
         Type: SPOT 
         InstanceRole:
-          Ref: BatchInstanceProfile
+          Ref: BatchInstanceProfileC5A
         InstanceTypes: !Ref InstanceTypes
         ImageId: ami-09f62d2604cc5b8fe # my custom Logan AMI (has awscliv2, mdadm) 
         Ec2KeyPair: "serratus"
         SpotIamFleetRole: !Ref SpotIamFleetRole
         Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
         Tags:
-          Name: Logan-Analysis-SPOTD-3
+          Name: Logan-Analysis-SPOTC5A-3
         SecurityGroupIds:
         - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
       ReplaceComputeEnvironment: false
       State: ENABLED
 
-  BatchECSCED4:
-    Type: AWS::Batch::ComputeEnvironment
-    Properties:
-      Type: MANAGED
-      ComputeResources:
-        AllocationStrategy: SPOT_PRICE_CAPACITY_OPTIMIZED
-        LaunchTemplate:
-            LaunchTemplateId: !Ref BatchLaunchTemplateDisques
-            Version: !GetAtt BatchLaunchTemplateDisques.LatestVersionNumber
-        MinvCpus: !Ref Minvcpus
-        MaxvCpus: !Ref Maxvcpus
-        Type: SPOT 
-        InstanceRole:
-          Ref: BatchInstanceProfile
-        InstanceTypes: !Ref InstanceTypes
-        ImageId: ami-09f62d2604cc5b8fe # my custom Logan AMI (has awscliv2, mdadm) 
-        Ec2KeyPair: "serratus"
-        SpotIamFleetRole: !Ref SpotIamFleetRole
-        Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
-        Tags:
-          Name: Logan-Analysis-SPOTD-4
-        SecurityGroupIds:
-        - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
-      ReplaceComputeEnvironment: false
-      State: ENABLED
-
-  BatchJobQueue:
+  BatchJobQueueC5A:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: 'LoganAnalysisJobQueueDisques'
+      JobQueueName: 'LoganAnalysisJobQueueC5A'
       ComputeEnvironmentOrder:
-        - ComputeEnvironment: !Ref BatchECSCED
+        - ComputeEnvironment: !Ref CENODISK
           Order: 1
-        - ComputeEnvironment: !Ref BatchECSCED2
+        - ComputeEnvironment: !Ref CENODISK2
           Order: 2
-        - ComputeEnvironment: !Ref BatchECSCED3
+        - ComputeEnvironment: !Ref CENODISK3
           Order: 3
       Priority: 1
       State: "ENABLED"
 
-  LoganAnalysisOneCoreJobDefinition:
+  LoganAnalysisOneCoreNoDiskJobDefinition:
     Type: AWS::Batch::JobDefinition
     Properties:
       Type: container
-      JobDefinitionName: 'logan-analysis-1c-job' 
+      JobDefinitionName: 'logan-analysis-nodisk-1c-job' 
       ContainerProperties:
         Image:
           Fn::Join:
@@ -284,36 +231,14 @@ Resources:
             - ".amazonaws.com/logan-analysis-job-x86_64:latest"
         ResourceRequirements:
           - Type: MEMORY
-            Value: "1500" # Vcpu/mem ratio of C5's
+            Value: "1500"
           - Type: VCPU
             Value: "1" 
-        MountPoints:
-          - ContainerPath: "/localdisk"
-            ReadOnly: false
-            SourceVolume: localdisk
-        Volumes:
-          - Name: localdisk
-            Host:
-              SourcePath: "/localdisk"
       RetryStrategy:
-        Attempts: 5
+        Attempts: 2
         EvaluateOnExit:
           - OnStatusReason: "Host EC2*"
             Action: "RETRY"
           - OnReason: "*"
             Action: "EXIT"
 
-
-
-#############
-## Outputs ##
-#############
-Outputs:
-  ComputeEnvironment:
-    Value: !Ref BatchECSCED
-  ComputeEnvironment:
-    Value: !Ref BatchECSCED2
-  ComputeEnvironment:
-    Value: !Ref BatchECSCED3
-  JobQueue:
-    Value: !Ref BatchJobQueue

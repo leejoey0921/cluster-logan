@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -eu
 
 # Initialize variables to hold the last executed command and its line number.
 LAST_CMD=""
@@ -41,8 +41,7 @@ task() {
     mkdir -p /localdisk/"$accession"
     cd /localdisk/"$accession" || exit
    
-    echo "$filename"
-    # also opportunistically run palmscan on contigs
+    # opportunistically run palmscan on contigs
     if [[ "$filename" == *"contigs"* ]]; then
         folder="c"
         echo "Downloading accession $accession"

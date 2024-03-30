@@ -15,7 +15,7 @@ function usage {
   echo "    -h    Show this help/usage message"
   echo ""
   echo "    Required Fields"
-  echo "    -i    S3 path of Logan unitigs/contigs to process [s3://bucket/file.txt]"
+  echo "    -i    S3 path of list of Logan unitigs/contigs to process [s3://bucket/file.txt]"
   echo "    -o    Output S3 bucket name [testbucket]"
   echo ""
   echo 'ex: docker build -t logan-analysis-job-x86_64 . && docker run logan-analysis-job-x86_64 -i s3://bucket/file.txt -o testbucket'

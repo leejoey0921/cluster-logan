@@ -1,11 +1,16 @@
 #!/bin/bash -e
 
+# changeme
+#jobqueue=LoganAnalysisJobQueueDisques
+#OneCoreJob=logan-analysis-1c-job
+OneCoreJob=logan-analysis-nodisk-1c-job
+jobqueue=LoganAnalysisJobQueueC5A
+
 outputbucket=$1
-jobqueue=LoganAnalysisJobQueueDisques
 nbsplit=$2
 dryrun=$3
 
-JOBTIMEOUT=20000 # 6 hour max per job, aiming at > 35 GB/hour processed by core, should be around 140 GB/s when all alone
+JOBTIMEOUT=40000 # 11 hour max per job, aiming at > 20 GB/hour processed by core, should be around 140 GB/hour when all alone
 
 # Check if an argument is provided
 if [ $# -lt 1 ]; then
@@ -92,8 +97,6 @@ split_and_upload() {
 
     rm -Rf $partfolder
 }
-
-OneCoreJob=logan-analysis-1c-job
 
 # submit job arrays
 echo "Submitting to JobQueue: $jobqueue"
