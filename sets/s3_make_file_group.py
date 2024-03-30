@@ -1,8 +1,10 @@
 # Initialize variables
 target_size = 500_000_000_000_000  # 500 TB in bytes
 
-s3prefix = "s3://logan-canada/u/"
-setname = "canada_u"
+#s3prefix = "s3://logan-canada/u/"
+#setname = "canada_u"
+s3prefix = "s3://logan-staging/u/"
+setname = "staging-u"
 
 current_group_size = 0
 group_index = 1
@@ -10,7 +12,7 @@ file_paths = []
 
 # Function to write file paths to a group
 def write_group(file_paths, group_index):
-    with open(f"{setname}_{group_index}.txt", "w") as f:
+    with open(f"{setname}-{group_index}.txt", "w") as f:
         for path in file_paths:
             f.write(f"{s3prefix}{path}\n")
 

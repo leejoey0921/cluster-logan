@@ -65,7 +65,7 @@ task() {
         folder="u"
         # for unitigs: don't even download locally, do a server-side copy
         clean_path="${s3file#s3://}"
-        if ! \time rclone copy aws:$clean_path aws:"$outbucket"/"$folder"/"$accession"/ --s3-use-already-exists 0 -v; then
+        if ! \time rclone copy aws:$clean_path aws:"$outbucket"/"$folder"/"$accession"/ --s3-use-already-exists 0 --s3-no-check-bucket -v; then
             return 1  # Trigger error handling if s3 cp fails.
         fi
 

@@ -4,6 +4,10 @@ System to analyze Logan unitigs/contigs at scale with AWS Batch.
 
 Adapted from https://github.com/ababaian/logan
 
+## Warning / Costs
+
+Running this system costs real $'s in your AWS bill. Spot instances with local disk are 0.0022$ per vCPU-hour (https://instances.vantage.sh/aws/ec2/c5d.4xlarge). E.g. a 10,000 vCPU workload during 10 hours is 220$ total. Do a test run and use AWS Cost Explorer 24 hours later to see real costs.
+
 ## Running in production
 
 In the ̀`batch/` folder:
@@ -25,7 +29,6 @@ Where `dest_bucket` is the name of the destination bucket, and `nb_jobs` is the 
 ## Running a test
 
 Run `test_docker.sh` for a local test or `run_test.sh` for a Batch test job.
-
 
 ## Cleanup
 
