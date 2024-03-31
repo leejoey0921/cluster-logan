@@ -47,7 +47,7 @@ task() {
     if [[ "$filename" == *"contigs"* ]]; then
         folder="c"
         echo "Downloading accession $accession"
-        if ! \time s5cmd cp -c 1 "$s3file" "$filename" ; then
+        if ! \time s5cmd cp -c $THREADS "$s3file" "$filename" ; then
             return 1  # This ensures the error trap is triggered if s3 cp fails.
         fi
 
@@ -72,11 +72,11 @@ task() {
           -tabbedout "$filename_noz".16s_results.txt \
           -threads $THREADS
         [ -s "$filename_noz".16s.fa ]               && s5cmd cp -c 1 "$filename_noz".16s.fa          s3://serratus-rayan/logan_16s_contigs/"$accession"/
-        [ -s "$filename_noz".16s_results.txt ]      && grep -v "wins=0\sgenes=0\sfrags=0" "$filename_noz".16s_results.txt > "$filename_noz".16s_results.filt.txt
+        [ -s "$filename_noz".16s_results.txt ]      && grep -v "wins=0\sgenes=0\sfrags=0" "$filename_noz".16s_results.txt > "$filename_noz".16s_results.filt.txt || true
         [ -s "$filename_noz".16s_results.filt.txt ] && s5cmd cp -c 1 "$filename_noz".16s_results.filt.txt s3://serratus-rayan/logan_16s_contigs/"$accession"/
 
         echo "Uploading accession $accession"
-        if ! \time s5cmd cp -c 1 "$filename" s3://"$outbucket"/"$folder"/"$accession"/; then
+        if ! \time s5cmd cp -c $THREADS "$filename" s3://"$outbucket"/"$folder"/"$accession"/; then
             return 1  # Trigger error handling if s3 cp fails.
         fi
     else
@@ -89,7 +89,6 @@ task() {
 
     fi
 
-   
     rm -Rf /localdisk/"$accession"
     echo "Done with $accession"
     trap '' EXIT
