@@ -60,6 +60,10 @@ COPY rclone.conf /root/.config/rclone
 RUN aws s3 cp s3://serratus-rayan/tools/usearch_16s /usr/local/bin --no-sign-request && chmod +x /usr/local/bin/usearch_16s
 RUN aws s3 cp s3://serratus-rayan/tools/usearch_16s.gg97.bitvec /  --no-sign-request 
 
+# seqtk
+RUN aws s3 cp s3://serratus-rayan/tools/seqtk-1.4-he4a0461_2.tar.bz2 . --no-sign-request && \
+    tar xf seqtk-1.4-he4a0461_2.tar.bz2 && mv bin/seqtk /usr/local/bin
+
 # (for local testing ; will be already mounted in Batch production)
 RUN mkdir -p /localdisk
 

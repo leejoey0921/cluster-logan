@@ -2,8 +2,9 @@
 
 # changeme
 jobqueue=LoganAnalysisJobQueueDisques
-OneCoreJob=logan-analysis-1c-job
-#OneCoreJob=logan-analysis-nodisk-1c-job
+jobdef=logan-analysis-4c-job
+
+#jobdef=logan-analysis-nodisk-1c-job
 #jobqueue=LoganAnalysisJobQueueC5A
 
 outputbucket=$1
@@ -12,7 +13,6 @@ dryrun=$3
 
 JOBTIMEOUT=80000 # 22 hour max per job
 # for copy, timelimit was 40000, aiming at > 20 GB/hour processed by core, should be around 140 GB/hour when all alone
-# for contigs palmscan/16s, timelimit was 80000
 
 # Check if an argument is provided
 if [ $# -lt 1 ]; then
@@ -101,7 +101,7 @@ split_and_upload() {
 }
 
 # submit job arrays
-echo "Submitting to JobQueue: $jobqueue"
-[ -f array_1c.txt  ] && split_and_upload array_1c.txt $OneCoreJob "$jobqueue" "$dryrun"
+echo "Submitting to JobQueue: $jobqueue JobDef: $jobdef"
+[ -f array_1c.txt  ] && split_and_upload array_1c.txt $jobdef "$jobqueue" "$dryrun"
 
 rm -f array_1c.txt
