@@ -18,7 +18,7 @@ LABEL tags="logan"
 # Update Core
 RUN yum -y update
 RUN yum -y install bash wget time unzip zstd \
-           which sudo jq tar 
+           which sudo jq tar bzip2 
 RUN python3 -m ensurepip
 
 # AWS S3
@@ -31,11 +31,16 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 # palmscan
 RUN aws s3 cp s3://serratus-rayan/tools/palmscan2 /usr/local/bin --no-sign-request && chmod +x /usr/local/bin/palmscan2
 
+# gotranseq is buggy, randomly crashes with deadlock
+#RUN wget https://github.com/feliixx/gotranseq/releases/download/v0.4.0/gotranseq_0.4.0_Linux_x86_64.tar.gz && \
+#    tar xf gotranseq_0.4.0_Linux_x86_64.tar.gz && \
+#    rm gotranseq_0.4.0_Linux_x86_64.tar.gz && \
+#    mv gotranseq /usr/local/bin/
+
 # transeq
-RUN wget https://github.com/feliixx/gotranseq/releases/download/v0.4.0/gotranseq_0.4.0_Linux_x86_64.tar.gz && \
-    tar xf gotranseq_0.4.0_Linux_x86_64.tar.gz && \
-    rm gotranseq_0.4.0_Linux_x86_64.tar.gz && \
-    mv gotranseq /usr/local/bin/
+RUN mkdir /emboss && cd /emboss && aws s3 cp s3://serratus-rayan/tools/emboss-5.0.0-h9f0ad1d_1.tar.bz2 . --no-sign-request && \
+    tar xf emboss-5.0.0-h9f0ad1d_1.tar.bz2
+ENV PATH="$PATH:/emboss/bin"
 
 # s5cmd
 RUN wget https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linux-64bit.tar.gz &&\

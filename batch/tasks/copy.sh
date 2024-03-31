@@ -52,7 +52,7 @@ task() {
         \time zstd -d -c $filename > $filename_noz
 
         # palmscan2 analysis
-        \time gotranseq --sequence $filename_noz --outseq $filename_trans --frame 6 -n 1
+        \time transeq $filename_noz $filename_trans -frame 6 
         if ! \time palmscan2 -search_pssms $filename_trans -tsv "$filename_trans".hits.tsv -min_palm_score 5.0 -fasta "$filename_trans".pps.fa -threads 1; then
             return 1  # Trigger error handling if palmscan2 fails.
         fi
