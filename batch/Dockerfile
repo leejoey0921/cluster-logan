@@ -51,6 +51,10 @@ RUN wget https://downloads.rclone.org/v1.66.0/rclone-v1.66.0-linux-amd64.zip && 
 RUN mkdir -p /root/.config/rclone/
 COPY rclone.conf /root/.config/rclone
 
+# Robert's custom 16s search tool
+RUN aws s3 cp s3://serratus-rayan/tools/usearch_16s /usr/local/bin --no-sign-request && chmod +x /usr/local/bin/usearch_16s
+RUN aws s3 cp s3://serratus-rayan/tools/usearch_16s.gg97.bitvec /  --no-sign-request 
+
 # (for local testing ; will be already mounted in Batch production)
 RUN mkdir -p /localdisk
 

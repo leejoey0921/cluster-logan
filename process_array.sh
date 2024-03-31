@@ -102,3 +102,4 @@ split_and_upload() {
 echo "Submitting to JobQueue: $jobqueue"
 [ -f array_1c.txt  ] && split_and_upload array_1c.txt $OneCoreJob "$jobqueue" "$dryrun"
 
+rm -f array_1c.txt
