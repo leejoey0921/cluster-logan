@@ -56,17 +56,19 @@ task() {
         if ! \time palmscan2 -search_pssms $filename_trans -tsv "$filename_trans".hits.tsv -min_palm_score 5.0 -fasta "$filename_trans".pps.fa -threads 1; then
             return 1  # Trigger error handling if palmscan2 fails.
         fi
-        [ -f "$filename_trans".hits.tsv ] && s5cmd cp -c 1 "$filename_trans".hits.tsv s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
-        [ -f "$filename_trans".pps.fa   ] && s5cmd cp -c 1 "$filename_trans".pps.fa   s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
+        [ -s "$filename_trans".hits.tsv ] && s5cmd cp -c 1 "$filename_trans".hits.tsv s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
+        [ -s "$filename_trans".pps.fa   ] && s5cmd cp -c 1 "$filename_trans".pps.fa   s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
 
         # 16s analysis
         usearch_16s \
           -search_16s $filename_noz \
           -bitvec /usearch_16s.gg97.bitvec \
           -fastaout "$filename_noz".16s.fa \
-          -tabbedout "$filename_noz".16s_results.txt
-        [ -f "$filename_noz".16s.fa ]          && s5cmd cp -c 1 "$filename_noz".16s.fa          s3://serratus-rayan/logan_16s_contigs/"$accession"/
-        [ -f "$filename_noz".16s_results.txt ] && s5cmd cp -c 1 "$filename_noz".16s_results.txt s3://serratus-rayan/logan_16s_contigs/"$accession"/
+          -tabbedout "$filename_noz".16s_results.txt \
+          -threads 1
+        grep -v "wins=0\sgenes=0\sfrags=0" "$filename_noz".16s_results.txt > "$filename_noz".16s_results.filt.txt
+        [ -s "$filename_noz".16s.fa ]               && s5cmd cp -c 1 "$filename_noz".16s.fa          s3://serratus-rayan/logan_16s_contigs/"$accession"/
+        [ -s "$filename_noz".16s_results.filt.txt ] && s5cmd cp -c 1 "$filename_noz".16s_results.filt.txt s3://serratus-rayan/logan_16s_contigs/"$accession"/
 
         echo "Uploading accession $accession"
         if ! \time s5cmd cp -c 1 "$filename" s3://"$outbucket"/"$folder"/"$accession"/; then
