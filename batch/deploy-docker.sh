@@ -6,9 +6,7 @@ REPO=${ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/${DOCKER_CONTAINER}
 TAG=build-$(date -u "+%Y-%m-%d")
 echo "Building Docker Image..."
 #NOCACHE=--no-cache
-docker build $NOCACHE -t $DOCKER_CONTAINER \
-             . \
-             --build-arg AWS_DEFAULT_REGION=us-east-1 
+docker build $NOCACHE -t $DOCKER_CONTAINER .
 
 #echo "Authenticating against AWS ECR..."
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com

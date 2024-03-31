@@ -41,7 +41,7 @@ task() {
     mkdir -p /localdisk/"$accession"
     cd /localdisk/"$accession" || exit
    
-    # opportunistically run palmscan on contigs
+    # opportunistically run palmscan and 16s analysis on contigs
     if [[ "$filename" == *"contigs"* ]]; then
         folder="c"
         echo "Downloading accession $accession"
