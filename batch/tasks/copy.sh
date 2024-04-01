@@ -57,15 +57,13 @@ task() {
         # palmscan2 analysis
         #\time transeq $filename_noz $filename_trans -frame 6 
         # a better transeq:
-        palmscan2 -fasta_xlat $filename_noz -fastaout $filename_trans -threads $THREADS
-        if ! \time palmscan2 -search_pssms $filename_trans -tsv "$filename_trans".hits.tsv -min_palm_score 5.0 -fasta "$filename_trans".pps.fa -threads $THREADS; then
-            return 1  # Trigger error handling if palmscan2 fails.
-        fi
+        [ -s $filename_noz ] && \time palmscan2 -fasta_xlat $filename_noz -fastaout $filename_trans -threads $THREADS
+        [ -s $filename_noz ] && \time palmscan2 -search_pssms $filename_trans -tsv "$filename_trans".hits.tsv -min_palm_score 5.0 -fasta "$filename_trans".pps.fa -threads $THREADS
         [ -s "$filename_trans".hits.tsv ] && s5cmd cp -c 1 "$filename_trans".hits.tsv s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
         [ -s "$filename_trans".pps.fa   ] && s5cmd cp -c 1 "$filename_trans".pps.fa   s3://serratus-rayan/logan_palmscan_contigs/"$accession"/
 
         # 16s analysis
-        usearch_16s \
+        [ -s $filename_noz ] && usearch_16s \
           -search_16s $filename_noz \
           -bitvec /usearch_16s.gg97.bitvec \
           -fastaout "$filename_noz".16s.fa \

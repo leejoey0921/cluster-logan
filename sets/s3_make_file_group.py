@@ -1,10 +1,13 @@
 # Initialize variables
-target_size = 500_000_000_000_000  # 500 TB in bytes
+#target_size = 500_000_000_000_000  # 500 TB in bytes
+target_size  =  20_000_000_000_000  # 20 TB in bytes
 
 #s3prefix = "s3://logan-canada/u/"
 #setname = "canada_u"
-s3prefix = "s3://logan-staging/u/"
-setname = "staging-u"
+#s3prefix = "s3://logan-staging/u/"
+#setname = "staging-u"
+s3prefix = "s3://logan-canada/c/"
+setname = "canada-c"
 
 current_group_size = 0
 group_index = 1
