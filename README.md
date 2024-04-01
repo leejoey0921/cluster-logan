@@ -6,7 +6,7 @@ Adapted from https://github.com/ababaian/logan
 
 ## Warning / Costs
 
-Running this system costs real \$'s in your AWS bill. Spot instances with local disk are 0.0022$ per vCPU-hour (https://instances.vantage.sh/aws/ec2/c5d.4xlarge). E.g. a 10,000 vCPU workload during 10 hours is 220$ total. Do a test run and use AWS Cost Explorer 24 hours later to see real costs.
+Running this system costs real \$'s in your AWS bill. Spot instances with local disk are 0.022$ per vCPU-hour (https://instances.vantage.sh/aws/ec2/c5d.4xlarge). E.g. a 10,000 vCPU workload during 10 hours is 2,200$ total. Do a test run and use AWS Cost Explorer 24 hours later to see real costs.
 
 ## Running in production
 
