@@ -9,9 +9,9 @@ echo "AWS_SESSION_TOKEN=$(jq -r '.Credentials.SessionToken' credentials.json)" >
 
 bucket=$(if [[ -z $(aws sts get-caller-identity |grep serratus-rayan) ]]; then echo "logan-dec2023-testbucket"; else echo "logan-testing-march2024"; fi)
 
-echo s3://logan-testing-march2024/u/DRR000001/DRR000001.unitigs.fa.zst >  array_1c.txt
-echo s3://logan-testing-march2024/u/DRR000002/DRR000002.unitigs.fa.zst >> array_1c.txt
-echo s3://logan-testing-march2024/c/DRR000002/DRR000002.contigs.fa.zst >> array_1c.txt
+#echo s3://logan-testing-march2024/u/DRR000001/DRR000001.unitigs.fa.zst >  array_1c.txt
+#echo s3://logan-testing-march2024/u/DRR000002/DRR000002.unitigs.fa.zst >> array_1c.txt
+echo s3://logan-testing-march2024/c/DRR000002/DRR000002.contigs.fa.zst > array_1c.txt
 echo s3://logan-testing-march2024/c/DRR000003/DRR000003.contigs.fa.zst >> array_1c.txt
 
 s3file=s3://$bucket/array_1c.txt
