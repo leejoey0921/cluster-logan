@@ -15,7 +15,6 @@ aws s3 rm s3://serratus-rayan-batchops-paris/c/DRR000003/DRR000003.contigs.fa.zs
 aws s3 rm s3://serratus-rayan-batchops-paris/c/DRR000005/DRR000005.contigs.fa.zst
 
 #bash process_array.sh serratus-rayan-batchops-paris 1
-bash process_array.sh serratus-rayan-batchops-paris 2
-#bash process_array.sh logan-pub 1
+bash process_array.sh nobucketname 2
 
 rm -f sets/test-array && mv set.bak set

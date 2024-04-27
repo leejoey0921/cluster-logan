@@ -1,6 +1,6 @@
 #!/bin/bash
 
-THREADS=2
+THREADS=4
 
 set -eu
 
@@ -32,7 +32,7 @@ task() {
     trap 'cleanup' EXIT
 	
 	s3file=$1
-	outbucket=$2
+    # disregards the second argument (output bucket), we're hardcoding output paths here
 
     echo "Logan Analysis ('sakura', april 2024) task for file: $s3file"
     filename=$(echo $s3file | awk -F/ '{print $NF}')
@@ -51,20 +51,27 @@ task() {
 	\time zstd -d -c $filename  > $filename_noz
 
     # diamond
+    # limits memory with b=0.4 as it is expected to use 6x that value in GB
+    # also doesn't use the -c1 param to lower memory
+    # https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options#memory--performance-options
+    # observed peak mem for a 800 MB database: 6.3GB
+    mkdir -p tmp_$accession
 	[ -s $filename_noz ] && \time diamond blastx -q $filename_noz -d /april26.dmnd -p $THREADS \
-		-c1 -b 0.75 --masking 0\
+		-b 0.4 --masking 0\
+        --tmpdir tmp_$accession \
 		-s 1 \
 		--sensitive -f 6 qseqid qstart qend qlen qstrand sseqid sstart send slen pident evalue cigar  \
-		> "$accession".diamond.april26.txt 
+		> "$accession".diamond.april26.txt || true 
+    rm -Rf tmp_$accession
 	[ -s "$accession".diamond.april26.txt ] && s5cmd cp -c 1 "$accession".diamond.april26.txt s3://serratus-rayan/beetles/logan_april26_run/diamond/$accession/
 
     # minimap2
-    [ -s $filename_noz ] && \time minimap2 --sam-hit-only -a -x sr -t $THREADS /STB.fa $filename_noz | grep -v '^@' > "$accession".STB.sam || true
-	[ -s "$accession".STB.sam ] && s5cmd cp -c 1 "$accession".STB.sam s3://serratus-rayan/beetles/logan_april26_run/minimap2/$accession/
+    #[ -s $filename_noz ] && \time minimap2 --sam-hit-only -a -x sr -t $THREADS /STB.fa $filename_noz | grep -v '^@' > "$accession".STB.sam || true
+	#[ -s "$accession".STB.sam ] && s5cmd cp -c 1 "$accession".STB.sam s3://serratus-rayan/beetles/logan_april26_run/minimap2/$accession/
     
     # circles
-    [ -s $filename_noz ] && \time python3 /circles-logan/circles.py $filename_noz 31 $filename_noz.circles.fa
-    [ -s $filename_noz.circles.fa ] && s5cmd cp -c 1 "$filename_noz".circles.fa s3://serratus-rayan/beetles/logan_april26_run/circles/$accession/
+    #[ -s $filename_noz ] && \time python3 /circles-logan/circles.py $filename_noz 31 $filename_noz.circles.fa || true
+    #[ -s $filename_noz.circles.fa ] && s5cmd cp -c 1 "$filename_noz".circles.fa s3://serratus-rayan/beetles/logan_april26_run/circles/$accession/
 
 
 	rm -Rf /localdisk/"$accession"

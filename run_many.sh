@@ -13,9 +13,9 @@ case "$response" in
 esac
 
 
-for i in $(seq 2 20)
+for i in $(seq 1 22)
 do
-    echo "canada-c-$i" > set
+    echo "pub-c-$i" > set
     cat set
-    bash process_array.sh logan-pub 10000
+    bash process_array.sh serratus-rayan 10000
 done

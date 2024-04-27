@@ -318,7 +318,7 @@ Resources:
             - ".amazonaws.com/logan-analysis-job-x86_64:latest"
         ResourceRequirements:
           - Type: MEMORY
-            Value: "3000" # Vcpu/mem ratio of C5's
+            Value: "3500" # Vcpu/mem ratio of C5's
           - Type: VCPU
             Value: "2" 
         MountPoints:

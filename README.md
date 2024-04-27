@@ -6,7 +6,7 @@ Adapted from https://github.com/ababaian/logan
 
 ## Warning / Costs
 
-Running this system costs real \$'s in your AWS bill. Spot instances with local disk are 0.022$ per vCPU-hour (https://instances.vantage.sh/aws/ec2/c5d.4xlarge). E.g. a 10,000 vCPU workload during 10 hours is 2,200$ total. Do a test run and use AWS Cost Explorer 24 hours later to see real costs.
+Running this system costs real \$'s in your AWS bill. Spot instances with local disk are 0.022$ per vCPU-hour (https://instances.vantage.sh/aws/ec2/c5d.4xlarge). E.g. a 10,000 vCPU workload during 10 hours is 2,200$ total. This corresponds roughly to a job capable of processing Logan compressed contigs at 1 MB per second per core. Do a pilot run and use AWS Cost Explorer 24 hours later to see real costs.
 
 ## Running in production
 
@@ -28,7 +28,7 @@ Where `dest_bucket` is the name of the destination bucket, and `nb_jobs` is the 
 
 ## Running a test
 
-Run `test_docker.sh` for a local test or `run_test.sh` for a Batch test job.
+Run `test_docker.sh` for a local test or `run_test.sh` for a Batch test job, then `run_pilot.sh` for an estimation of costs.
 
 ## Cleanup
 

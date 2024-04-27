@@ -6,8 +6,10 @@ target_size  =  20_000_000_000_000  # 20 TB in bytes
 #setname = "canada_u"
 #s3prefix = "s3://logan-staging/u/"
 #setname = "staging-u"
-s3prefix = "s3://logan-canada/c/"
-setname = "canada-c"
+#s3prefix = "s3://logan-canada/c/"
+#setname = "canada-c"
+s3prefix = "s3://logan-pub/c/"
+setname = "pub-c"
 
 current_group_size = 0
 group_index = 1
