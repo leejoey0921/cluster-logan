@@ -47,7 +47,7 @@ task() {
 		return 1  # This ensures the error trap is triggered if s3 cp fails.
 	fi
 
-	# decompress and drop short contigs
+	# decompress
 	\time zstd -d -c $filename  > $filename_noz
 
     # diamond
