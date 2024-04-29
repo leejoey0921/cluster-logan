@@ -65,23 +65,29 @@ task() {
     # https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options#memory--performance-options
     # observed peak mem for a 800 MB database: 6.3GB
     mkdir -p tmp_$accession
-	[ -s $filename_noz ] && \time diamond blastx -q $filename_noz -d /april26.dmnd -p $THREADS \
+    diamond_status=1
+	[ -s $filename_noz ] && {
+        \time diamond blastx -q $filename_noz -d /april26.dmnd -p $THREADS \
 		-b 0.4 --masking 0\
         --tmpdir tmp_$accession \
 		-s 1 \
 		--sensitive -f 6 qseqid qstart qend qlen qstrand sseqid sstart send slen pident evalue cigar  \
-		> "$accession".diamond.april26.txt || true 
+		> "$accession".diamond.april26.txt 
+        diamond_status=$?
+    } || true 
+    [ $diamond_status -eq 0 ] && touch "$accession".diamond.april26.txt # make it upload an empty file if no hits
+	[ -f "$accession".diamond.april26.txt ] && s5cmd cp -c 1 "$accession".diamond.april26.txt s3://serratus-rayan/beetles/logan_april26_run/diamond/$accession/
     rm -Rf tmp_$accession
-    touch "$accession".diamond.april26.txt # make it upload an empty file if no hits
-	[ -s "$accession".diamond.april26.txt ] && s5cmd cp -c 1 "$accession".diamond.april26.txt s3://serratus-rayan/beetles/logan_april26_run/diamond/$accession/
 
     # minimap2
     #[ -s $filename_noz ] && \time minimap2 --sam-hit-only -a -x sr -t $THREADS /STB.fa $filename_noz | grep -v '^@' > "$accession".STB.sam || true
-	#[ -s "$accession".STB.sam ] && s5cmd cp -c 1 "$accession".STB.sam s3://serratus-rayan/beetles/logan_april26_run/minimap2/$accession/
+    #[ $? -ne 0 ] && touch "$accession".STB.sam
+	#[ -f "$accession".STB.sam ] && s5cmd cp -c 1 "$accession".STB.sam s3://serratus-rayan/beetles/logan_april26_run/minimap2/$accession/
     
     # circles
     #[ -s $filename_noz ] && \time python3 /circles-logan/circles.py $filename_noz 31 $filename_noz.circles.fa || true
-    #[ -s $filename_noz.circles.fa ] && s5cmd cp -c 1 "$filename_noz".circles.fa s3://serratus-rayan/beetles/logan_april26_run/circles/$accession/
+    #[ $? -ne 0 ] && touch $filename_noz.circles.fa 
+    #[ -f $filename_noz.circles.fa ] && s5cmd cp -c 1 "$filename_noz".circles.fa s3://serratus-rayan/beetles/logan_april26_run/circles/$accession/
 
 
 	rm -Rf /localdisk/"$accession"
