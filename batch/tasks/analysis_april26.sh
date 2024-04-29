@@ -46,9 +46,18 @@ task() {
 	if ! \time s5cmd cp -c $THREADS "$s3file" "$filename" ; then
 		return 1  # This ensures the error trap is triggered if s3 cp fails.
 	fi
-
+   
+    if ! zstd --test $filename ; then
+        touch $accession.corrupt
+        s5cmd cp $accession.corrupt s3://serratus-rayan/logan_corrupt_contigs/
+        # here we want to just ignore that accession and continue
+	    rm -Rf /localdisk/"$accession"
+		return 0 
+	fi
+    
 	# decompress
-	\time zstd -d -c $filename  > $filename_noz
+	\time zstdcat $filename > $filename_noz
+    rm -f $filename
 
     # diamond
     # limits memory with b=0.4 as it is expected to use 6x that value in GB
@@ -63,6 +72,7 @@ task() {
 		--sensitive -f 6 qseqid qstart qend qlen qstrand sseqid sstart send slen pident evalue cigar  \
 		> "$accession".diamond.april26.txt || true 
     rm -Rf tmp_$accession
+    touch "$accession".diamond.april26.txt # make it upload an empty file if no hits
 	[ -s "$accession".diamond.april26.txt ] && s5cmd cp -c 1 "$accession".diamond.april26.txt s3://serratus-rayan/beetles/logan_april26_run/diamond/$accession/
 
     # minimap2
