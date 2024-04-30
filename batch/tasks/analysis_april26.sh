@@ -54,9 +54,19 @@ task() {
 	    rm -Rf /localdisk/"$accession"
 		return 0 
 	fi
-    
-	# decompress
-	\time zstdcat $filename > $filename_noz
+
+	# Get the file size in bytes
+	file_size=$(stat -c %s "$filename")
+    empty_accession=0
+
+	# Check if the file size is less than 200 bytes
+	if [ "$file_size" -lt 200 ]; then
+		echo "Contigs file is smaller than 200 bytes. Zstd somehow hangs on small files, so, skipping it entirely."
+        empty_accession=1
+    else
+	    # decompress
+    	\time zstdcat $filename > $filename_noz
+    fi
     rm -f $filename
 
     # diamond
@@ -75,18 +85,26 @@ task() {
 		> "$accession".diamond.april26.txt 
         diamond_status=$?
     } || true 
-    [ $diamond_status -eq 0 ] && touch "$accession".diamond.april26.txt # make it upload an empty file if no hits
+    [[ $diamond_status -eq 0 || $empty_accession -eq 1 ]] && touch "$accession".diamond.april26.txt # make it upload an empty file if no hits
 	[ -f "$accession".diamond.april26.txt ] && s5cmd cp -c 1 "$accession".diamond.april26.txt s3://serratus-rayan/beetles/logan_april26_run/diamond/$accession/
     rm -Rf tmp_$accession
 
     # minimap2
-    #[ -s $filename_noz ] && \time minimap2 --sam-hit-only -a -x sr -t $THREADS /STB.fa $filename_noz | grep -v '^@' > "$accession".STB.sam || true
-    #[ $? -ne 0 ] && touch "$accession".STB.sam
+    #minimap_status=1
+    #[ -s $filename_noz ] && {
+    #\time minimap2 --sam-hit-only -a -x sr -t $THREADS /STB.fa $filename_noz 
+    #minimap_status=$?
+    #} | grep -v '^@' > "$accession".STB.sam || true
+    #[[ $minimap_status -eq 0 || $empty_accession -eq 1 ]] && touch "$accession".STB.sam
 	#[ -f "$accession".STB.sam ] && s5cmd cp -c 1 "$accession".STB.sam s3://serratus-rayan/beetles/logan_april26_run/minimap2/$accession/
     
     # circles
-    #[ -s $filename_noz ] && \time python3 /circles-logan/circles.py $filename_noz 31 $filename_noz.circles.fa || true
-    #[ $? -ne 0 ] && touch $filename_noz.circles.fa 
+    #circles_status=1
+    #[ -s $filename_noz ] && {
+    #\time python3 /circles-logan/circles.py $filename_noz 31 $filename_noz.circles.fa 
+    #circles_status=$?
+    #} || true
+    #[[ $circles_status -eq 0 || $empty_accession -eq 1 ]] && touch $filename_noz.circles.fa 
     #[ -f $filename_noz.circles.fa ] && s5cmd cp -c 1 "$filename_noz".circles.fa s3://serratus-rayan/beetles/logan_april26_run/circles/$accession/
 
 
