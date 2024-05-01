@@ -2,7 +2,7 @@
 
 # changeme
 jobqueue=LoganAnalysisJobQueueDisques
-jobdef=logan-analysis-4c-job
+jobdef=logan-analysis-1c-8g-job
 
 #jobdef=logan-analysis-nodisk-1c-job
 #jobqueue=LoganAnalysisJobQueueC5A
@@ -33,9 +33,9 @@ date=$(date +"%b%d-%Y")
 arch=$(uname -m)
 tag=logan-analysis-$arch-$date-$set
 
-rm -f array_1c.txt
+rm -f array.txt
 
-cat sets/$set.txt > array_1c.txt
+cat sets/$set.txt > array.txt
 
 # Upload files to S3 with a unique identifier (e.g., timestamp)
 timestamp=$(date +"%Y%m%d%H%M%S")_$(cat set)_$$_$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13)
@@ -102,6 +102,6 @@ split_and_upload() {
 
 # submit job arrays
 echo "Submitting to JobQueue: $jobqueue JobDef: $jobdef"
-[ -f array_1c.txt  ] && split_and_upload array_1c.txt $jobdef "$jobqueue" "$dryrun"
+[ -f array.txt  ] && split_and_upload array.txt $jobdef "$jobqueue" "$dryrun"
 
-rm -f array_1c.txt
+rm -f array.txt
