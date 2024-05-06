@@ -1,4 +1,4 @@
-set -ex
+set -e
 rm -f results/complex.* results/selfloops.*
 #separator.file.cpp is an old version which took a local file. Now i'm directly reading from s3, much better
 g++ -o separator separator.s3.cpp 
@@ -8,22 +8,24 @@ g++ -o separator separator.s3.cpp
 # faster
 #find data/ -type f -name '*.contigs.fa.circles.fa' | xargs -I{} --process-slot-var=index -P 10 -n 1 sh -c './separator {} $index'
 
-mkfifo results/complex.test.fa
-mkfifo results/selfloops.test.fa
-zstd -c results/complex.test.fa > results/complex.test.fa.zst &
+task () {
+	i=$1
+
+mkfifo results/complex.$i.fa
+mkfifo results/selfloops.$i.fa
+zstd -c results/complex.$i.fa > results/complex.$i.fa.zst &
 zstd_pid1=$!
-zstd -c results/selfloops.test.fa > results/selfloops.test.fa.zst &
+zstd -c results/selfloops.$i.fa > results/selfloops.$i.fa.zst &
 zstd_pid2=$!
 
 # open the named pipes in read/write to a custom fd to prevent them from closing when ./separator exits
-exec 3<>results/selfloops.test.fa
-exec 4<>results/complex.test.fa
+exec 3<>results/selfloops.$i.fa
+exec 4<>results/complex.$i.fa
 
-split=plist.acc.txt_split/aa
-for acc in $(head -n 20 $split)
+split=plist.acc.txt_split/$i
+for acc in $(cat $split)
 do
-    ./separator s3://serratus-rayan/beetles/logan_april26_run/circles/$acc/$acc.contigs.fa.circles.fa test
-    echo "done"
+    ./separator s3://serratus-rayan/beetles/logan_april26_run/circles/$acc/$acc.contigs.fa.circles.fa $i
 done
 
 exec 3>&-
@@ -33,6 +35,10 @@ echo "waiting to zstd to finish"
 wait $zstd_pid1 
 wait $zstd_pid2
 
-rm results/complex.test.fa results/selfloops.test.fa 
+rm results/complex.$i.fa results/selfloops.$i.fa 
 
-echo "fifo complete"
+echo "$i fifo complete"
+}
+export -f task
+
+ls -1 plist.acc.txt_split | parallel -j 1000 "task {}"
