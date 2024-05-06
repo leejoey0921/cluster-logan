@@ -80,8 +80,8 @@ int main(int argc, char** argv) {
     }
 
     // Output files
-    ofstream selfloops("results/selfloops."+suffix+".fa", ios::app);
-    ofstream complex("results/complex."+suffix+".fa", ios::app);
+    ofstream selfloops("results/selfloops."+suffix+".fa", ios::app);     
+    ofstream complex("results/complex."+suffix+".fa", ios::app);     
 
     // Distribute sequences to appropriate files
     for (const auto& pair : circle_map) {
@@ -93,9 +93,6 @@ int main(int argc, char** argv) {
             }
         }
     }
-
-    selfloops.close();
-    complex.close();
 
     return 0;
 }

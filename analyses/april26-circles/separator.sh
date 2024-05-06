@@ -15,19 +15,18 @@ zstd_pid1=$!
 zstd -c results/selfloops.test.fa > results/selfloops.test.fa.zst &
 zstd_pid2=$!
 
+# open the named pipes in read/write to a custom fd to prevent them from closing when ./separator exits
+exec 3<>results/selfloops.test.fa
+exec 4<>results/complex.test.fa
+
 split=plist.acc.txt_split/aa
-for acc in $(head -n 2 $split)
+for acc in $(head -n 20 $split)
 do
     ./separator s3://serratus-rayan/beetles/logan_april26_run/circles/$acc/$acc.contigs.fa.circles.fa test
     echo "done"
 done
 
-echo "some exec"
-
-exec 4<>results/complex.test.fa
-exec 4>&-
-
-exec 4<>results/selfloops.test.fa
+exec 3>&-
 exec 4>&-
 
 echo "waiting to zstd to finish"
