@@ -3,6 +3,11 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
 
 using namespace std;
 
@@ -13,24 +18,36 @@ struct FastaEntry {
 
 int main(int argc, char** argv) {
     if (argc != 3) {
-        cerr << "Usage: " << argv[0] << " <input_filename> <suffix>" << endl;
-        return 1;
-    }
-
-    string filename = argv[1];
-    ifstream input(filename);
-    if (!input.is_open()) {
-        cerr << "Error opening file: " << filename << endl;
+        cerr << "Usage: " << argv[0] << " <s3_input_filename> <suffix>" << endl;
         return 1;
     }
 
     string suffix = argv[2];  // the index for output filenames
 
     unordered_map<string, vector<FastaEntry>> circle_map;
-    string line, current_header, current_sequence, full_header ;
+    string current_header, current_sequence, full_header ;
 
-    // Read the FASTA file
-    while (getline(input, line)) {
+    // Prepare the AWS CLI command
+    string s3_path = argv[1];
+    string command = "aws s3 cp " + s3_path + " -";
+
+    // Open a pipe to the AWS CLI command
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        cerr << "Error: Failed to open pipe for command: " << command << endl;
+        return 1;
+    }
+
+    char* c_line = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    // Use getline to read from the pipe
+    while ((read = getline(&c_line, &len, pipe)) != -1) {
+		if (c_line[read - 1] == '\n') {
+            c_line[read - 1] = '\0'; // Remove newline character
+        }
+        string line(c_line);
         if (line.empty()) continue;
         if (line[0] == '>') {  // New header line
             if (!current_header.empty()) {
@@ -52,7 +69,15 @@ int main(int argc, char** argv) {
         circle_map[current_header].push_back({full_header, current_sequence});
     }
 
-    input.close();
+    // Free the allocated buffer
+    free(c_line);
+
+    // Close the pipe
+    int status = pclose(pipe);
+    if (status == -1) {
+        cerr << "Error: Failed to close pipe" << endl;
+        return 1;
+    }
 
     // Output files
     ofstream selfloops("results/selfloops."+suffix+".fa", ios::app);
