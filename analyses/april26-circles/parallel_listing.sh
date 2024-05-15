@@ -6,10 +6,10 @@ for prefix in DRR ERR SRR ;do
 		if [[ "$p" == "SRR1" || "$p" == "SRR2" ]]; then
             for subprefix in $(seq 0 9); do
                 subp=${p}${subprefix}
-                \time s5cmd ls s3://serratus-rayan/$folder/$subp > plist_$subp &
+                \time s5cmd ls s3://serratus-rayan/$folder/${subp}* > plist_$subp &
             done
 		else
-	        \time s5cmd ls s3://serratus-rayan/$folder/$p > plist_$p &
+	        \time s5cmd ls s3://serratus-rayan/$folder/${p}* > plist_$p &
         fi
     done
 done
