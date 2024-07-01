@@ -19,14 +19,14 @@ void processLine(const std::string& line, std::unordered_map<std::string, Access
     std::string category;
 
     // Read the first field for accession
-    std::getline(iss, field, '\t');
+    std::getline(iss, field, ' ');
     accession = field.substr(0, field.find('_'));
 
-    // Skip to the sixth field
+    /*/ Skip to the sixth field
     for (int i = 0; i < 4; ++i) {
         std::getline(iss, field, '\t');
-    }
-    std::getline(iss, field, '\t');
+    }*/
+    std::getline(iss, field, ' ');
     
     std::string::size_type pos = field.find_first_of("-_.");
     category = field.substr(0, pos);

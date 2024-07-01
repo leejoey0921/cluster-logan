@@ -2,7 +2,7 @@
 
 # changeme
 jobqueue=LoganAnalysisJobQueueDisques
-jobdef=logan-analysis-1c-8g-job
+jobdef=logan-analysis-2c-job
 
 #jobdef=logan-analysis-nodisk-1c-job
 #jobqueue=LoganAnalysisJobQueueC5A

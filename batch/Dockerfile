@@ -65,8 +65,8 @@ RUN aws s3 cp s3://serratus-rayan/tools/seqtk-1.4-he4a0461_2.tar.bz2 . --no-sign
     tar xf seqtk-1.4-he4a0461_2.tar.bz2 && mv bin/seqtk /usr/local/bin
 
 # circle detection
-RUN git clone https://gitlab.pasteur.fr/rchikhi_pasteur/circles-logan.git
-RUN pip3 install networkx numpy
+#RUN git clone https://gitlab.pasteur.fr/rchikhi_pasteur/circles-logan.git
+#RUN pip3 install networkx numpy
 
 # diamond
 RUN wget https://github.com/bbuchfink/diamond/releases/download/v2.1.9/diamond-linux64.tar.gz && tar xf diamond-linux64.tar.gz && mv diamond /usr/local/bin
@@ -75,8 +75,11 @@ RUN wget https://github.com/bbuchfink/diamond/releases/download/v2.1.9/diamond-l
 RUN wget https://github.com/lh3/minimap2/releases/download/v2.28/minimap2-2.28_x64-linux.tar.bz2 && tar xf minimap2-2.28_x64-linux.tar.bz2  && mv minimap2-2.28_x64-linux/minimap2 /usr/local/bin
 
 # copy diamond DB
-RUN aws s3 cp s3://serratus-rayan/beetles/april26.dmnd . --no-sign-request
-RUN aws s3 cp s3://serratus-rayan/beetles/STB.fa . --no-sign-request
+#RUN aws s3 cp s3://serratus-rayan/beetles/april26.dmnd . --no-sign-request
+#RUN aws s3 cp s3://serratus-rayan/beetles/STB.fa . --no-sign-request
+RUN aws s3 cp s3://serratus-rayan/beetles/july1.dmnd . --no-sign-request
+RUN aws s3 cp s3://serratus-rayan/beetles/july1.dmnd.seed_idx . --no-sign-request
+RUN aws s3 cp s3://serratus-rayan/beetles/rep12.fa . --no-sign-request
 
 # Copy Scripts
 COPY logan-analysis.sh /
