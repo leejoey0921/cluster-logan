@@ -9,12 +9,6 @@ mv set set.bak && echo "test-array" > set
 
 bash -c "cd batch && bash deploy-docker.sh"
 
-aws s3 rm s3://serratus-rayan-batchops-paris/c/DRR000001/DRR000001.contigs.fa.zst
-aws s3 rm s3://serratus-rayan-batchops-paris/c/DRR000002/DRR000002.contigs.fa.zst
-aws s3 rm s3://serratus-rayan-batchops-paris/c/DRR000003/DRR000003.contigs.fa.zst
-aws s3 rm s3://serratus-rayan-batchops-paris/c/DRR000005/DRR000005.contigs.fa.zst
-
-#bash process_array.sh serratus-rayan-batchops-paris 1
-bash process_array.sh nobucketname 2
+bash process_array.sh serratus-rayantest 2
 
 rm -f sets/test-array && mv set.bak set
