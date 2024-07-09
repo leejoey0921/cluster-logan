@@ -14,6 +14,7 @@ bucket=$(if [[ -z $(aws sts get-caller-identity |grep serratus-rayan) ]]; then e
 echo s3://logan-testing-march2024/c/DRR000002/DRR000002.contigs.fa.zst > array_1c.txt
 echo s3://logan-testing-march2024/c/DRR000003/DRR000003.contigs.fa.zst >> array_1c.txt
 echo s3://logan-pub/c/SRR26996305/SRR26996305.contigs.fa.zst >> array_1c.txt
+#echo s3://logan-pub/c/DRR030840/DRR030840.contigs.fa.zst >> array_1c.txt # a meatier set that has diamond hits in july1 analysis
 
 s3file=s3://$bucket/array_1c.txt
 aws s3 cp array_1c.txt $s3file

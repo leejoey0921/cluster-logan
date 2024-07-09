@@ -1,6 +1,6 @@
 #!/bin/bash
 
-read -p "Will start a $(tput bold)pilot$(tput sgr0) array with 0.01% of the SRA (equiv 4.4 Tbp reads). Proceed? (yes/no) " response
+read -p "Will start a $(tput bold)pilot$(tput sgr0) array with 0.01% of the SRA (equiv 4.4 Tbp reads). Make sure you've run_test.sh before. Proceed? (yes/no) " response
 
 case "$response" in
     [yY][eE][sS]|[yY])

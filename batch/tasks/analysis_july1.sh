@@ -65,7 +65,8 @@ task() {
         empty_accession=1
     else
 	    # decompress
-    	\time zstdcat $filename > $filename_noz
+        # also converts spaces in header to underscores to be included in diamond output
+        \time zstdcat $filename | perl -pe "if (/^>/) { s/\h+/_/g }"> $filename_noz
     fi
     rm -f $filename
 
@@ -84,7 +85,7 @@ task() {
         --tmpdir tmp_$accession \
         --sensitive \
         -k 1\
-        -f 6 qseqid  qstart qend qlen qstrand \
+        -f 6 qseqid qstart qend qlen qstrand \
              sseqid  sstart send slen \
              pident evalue cigar \
              qseq_translated full_qseq \
