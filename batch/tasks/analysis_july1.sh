@@ -34,7 +34,7 @@ task() {
 	s3file=$1
     # disregards the second argument (output bucket), we're hardcoding output paths here
 
-    echo "Logan Analysis ('euro2024', july 2024) task for file: $s3file"
+    echo "Logan analysis ('euro2024', july 2024) task for file: $s3file"
     filename=$(echo $s3file | awk -F/ '{print $NF}')
     accession=$(echo $filename | cut -d '.' -f1)
     filename_noz=${filename%.*}
@@ -92,8 +92,8 @@ task() {
 		> "$accession".diamond.$outdate.txt 
         diamond_status=$?
     } || true 
-    [[ $diamond_status -eq 0 || $empty_accession -eq 1 ]] && touch "$accession".diamond.$outdate.txt # make it upload an empty file if no hits
-	[ -f "$accession".diamond.$outdate.txt ] && s5cmd cp -c 1 "$accession".diamond.$outdate.txt s3://serratus-rayan/beetles/logan_${outdate}_run/diamond/$accession/
+    [[ $empty_accession -eq 1 ]] && touch "$accession".diamond.$outdate.txt # make it upload an empty file if no hits
+	[[ $diamond_status -eq 0 && -f "$accession".diamond.$outdate.txt ]] && s5cmd cp -c 1 "$accession".diamond.$outdate.txt s3://serratus-rayan/beetles/logan_${outdate}_run/diamond/$accession/
     rm -Rf tmp_$accession
 
     # minimap2
@@ -102,8 +102,8 @@ task() {
     \time minimap2 --sam-hit-only -a -x sr -t $THREADS /rep12.fa $filename_noz 
     minimap_status=$?
     } | grep -v '^@' > "$accession".rep12.sam || true
-    [[ $minimap_status -eq 0 || $empty_accession -eq 1 ]] && touch "$accession".rep12.sam
-	[ -f "$accession".rep12.sam ] && s5cmd cp -c 1 "$accession".rep12.sam s3://serratus-rayan/beetles/logan_${outdate}_run/minimap2/$accession/
+    [[ $empty_accession -eq 1 ]] && touch "$accession".rep12.sam
+	[[ $minimap_status -eq 0 && -f "$accession".rep12.sam ]] && s5cmd cp -c 1 "$accession".rep12.sam s3://serratus-rayan/beetles/logan_${outdate}_run/minimap2/$accession/
     
 
 	rm -Rf /localdisk/"$accession"

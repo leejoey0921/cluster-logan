@@ -86,12 +86,16 @@ fi
 
 # grab the list of accessions
 s5cmd cp -c 1 $S3FILE s3file.txt
-echo "$(wc -l s3file.txt | cut -d' ' -f1) files to process"
+nb_files=$(wc -l < s3file.txt)
+echo "$nb_files files to process"
+counter=0
 
 # for each accession (represented as a s3 path), do the task (e.g. copy)
 for s3elt in $(cat s3file.txt)
 do
 	task $s3elt $OUTBUCKET
+    counter=$((counter + 1))
+    echo "Logan analysis: $counter of $nb_files tasks completed."
 done
 
 echo "Logan analysis, all done!"

@@ -19,9 +19,12 @@ for line in sys.stdin:
             elif '16S' in what:
                 counts[acc].add('16S')
     elif ls[5].startswith('palmcores'):
-            counts[acc].add('palm')
+        counts[acc].add('palm')
     elif ls[5].startswith('var.obelisk'):
-            counts[acc].add('OBL')
+        if ls[5] == 'var.obelisk-1.SRR5319850_39367':
+            evalue = float(ls[10])
+            if evalue > 1e-20: continue # blacklists most small hits for that seq
+        counts[acc].add('OBL')
 
 print("acc,cox,its,16s,obli,palm")
 for acc in counts:
