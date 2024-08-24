@@ -77,7 +77,7 @@ task() {
     # in the small database opt mode https://github.com/bbuchfink/diamond/wiki/5.-Advanced-topics#small-database-optimization
     # with --sensitive -s1
     mkdir -p tmp_$accession
-    diamond_status=1
+    diamond_status=0
 	[ -s $filename_noz ] && {
         \time diamond blastx -q $filename_noz -d /aug24.dmnd -p $THREADS \
 		-c 1 --masking 0\
