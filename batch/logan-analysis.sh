@@ -7,7 +7,8 @@ set -eu
 # modify me
 #task=copy
 #task=analysis_april26
-task=analysis_july1
+#task=analysis_july1
+task=analysis_aug24
 
 # Usage
 function usage {

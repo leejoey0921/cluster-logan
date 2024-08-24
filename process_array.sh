@@ -2,8 +2,8 @@
 
 # changeme
 jobqueue=LoganAnalysisJobQueueDisques
-#jobdef=logan-analysis-2c-job
-jobdef=logan-analysis-16c-job
+jobdef=logan-analysis-2c-job
+#jobdef=logan-analysis-16c-job
 
 #jobdef=logan-analysis-nodisk-1c-job
 #jobqueue=LoganAnalysisJobQueueC5A
@@ -30,9 +30,10 @@ arraybucket=$(if [[ -z $(aws sts get-caller-identity |grep serratus-rayan) ]]; t
 arrayfolder=logan-analysis-jobarrays
 
 set=$(cat set)
-date=$(date +"%b%d-%Y")
+date=$(date +"%F")
 arch=$(uname -m)
 tag=logan-analysis-$arch-$date-$set
+echo "tag: $tag"
 
 rm -f array.txt
 
