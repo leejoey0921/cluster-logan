@@ -1,6 +1,7 @@
 #folder=beetles/logan_april26_run/diamond
 #folder=beetles/logan_april26_run/circles
-folder=beetles/logan_july5_run/diamond
+#folder=beetles/logan_july5_run/diamond
+folder=beetles/logan_july5_run/minimap2
 
 set -ex
 

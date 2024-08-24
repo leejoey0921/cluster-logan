@@ -1,6 +1,6 @@
 #!/bin/bash
 
-THREADS=4
+THREADS=16
 
 set -eu
 
@@ -99,7 +99,8 @@ task() {
     # minimap2
     minimap_status=1
     [ -s $filename_noz ] && {
-    \time minimap2 --sam-hit-only -a -x sr -t $THREADS /rep12.fa $filename_noz 
+    # not doing minimap this time
+    #\time minimap2 --sam-hit-only -a -x sr -t $THREADS /rep12.fa $filename_noz 
     minimap_status=$?
     } | grep -v '^@' > "$accession".rep12.sam || true
     [[ $empty_accession -eq 1 ]] && touch "$accession".rep12.sam
