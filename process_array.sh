@@ -2,8 +2,8 @@
 
 # changeme
 jobqueue=LoganAnalysisJobQueueDisques
-jobdef=logan-analysis-2c-job
-#jobdef=logan-analysis-16c-job
+vcpus=32
+jobdef=logan-analysis-${vcpus}c-job
 
 #jobdef=logan-analysis-nodisk-1c-job
 #jobqueue=LoganAnalysisJobQueueC5A
@@ -91,13 +91,14 @@ split_and_upload() {
                 --job-queue  $jobqueue \
                 $ARRAYPROP "$ARRAYPROP2" \
                 --timeout attemptDurationSeconds="$JOBTIMEOUT" \
-                --parameters s3files="$s3files",outputbucket="$outputbucket" \
+                --parameters s3files="$s3files",outputbucket="$outputbucket",threads="$vcpus" \
                 --container-overrides '{
                   "command": [
                 "-i", "Ref::s3files",
-                "-o", "Ref::outputbucket"
+                "-o", "Ref::outputbucket",
+                "-t", "Ref::threads"
                   ]}'
-    echo "array job submitted! ($s3files)"
+    echo "array job submitted! (s3files=$s3files, threads=$vcpus)"
 
     rm -Rf $partfolder
 }

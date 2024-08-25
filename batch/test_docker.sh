@@ -24,6 +24,6 @@ docker build -t logan-analysis-job-x86_64 .
 docker run \
     --env-file credentials.env \
     logan-analysis-job-x86_64 \
-    -i $s3file -o serratus-rayan-batchops-paris
+    -i $s3file -o serratus-rayan-batchops-paris -t 2
 
 rm -f credentials.env credentials.json

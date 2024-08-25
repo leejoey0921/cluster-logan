@@ -1,7 +1,5 @@
 #!/bin/bash
 
-THREADS=4
-
 set -eu
 
 # Initialize variables to hold the last executed command and its line number.
@@ -32,7 +30,8 @@ task() {
     trap 'cleanup' EXIT
 	
 	s3file=$1
-    # disregards the second argument (output bucket), we're hardcoding output paths here
+    THREADS=$2
+    # disregards the third argument (output bucket), we're hardcoding output paths here
 
     echo "Logan analysis ('anniv2024', august 2024) task for file: $s3file"
     filename=$(echo $s3file | awk -F/ '{print $NF}')
@@ -68,7 +67,7 @@ task() {
         # also converts spaces in header to underscores to be included in diamond output
         \time zstdcat $filename | perl -pe "if (/^>/) { s/\h+/_/g }"> $filename_noz
     fi
-    rm -f $filename
+    rm -f $filename # saves space
 
     # setting the suffix
     outdate=aug24

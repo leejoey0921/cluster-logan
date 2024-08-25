@@ -20,6 +20,7 @@ function usage {
   echo "    Required Fields"
   echo "    -i    S3 path of list of Logan unitigs/contigs to process [s3://bucket/file.txt]"
   echo "    -o    Output S3 bucket name [testbucket]"
+  echo "    -t    Number of threads"
   echo ""
   echo 'ex: docker build -t logan-analysis-job-x86_64 . && docker run logan-analysis-job-x86_64 -i s3://bucket/file.txt -o testbucket'
   false
@@ -37,7 +38,7 @@ function log () {
     fi
 }
 
-while getopts i:o:vh FLAG; do
+while getopts i:o:t:vh FLAG; do
   case $FLAG in
     # Search Files  -----------
     i)
@@ -45,6 +46,9 @@ while getopts i:o:vh FLAG; do
       ;;
     o)
       OUTBUCKET=$OPTARG
+      ;;
+    t)
+      THREADS=$OPTARG
       ;;
 	v)
       VERBOSE='TRUE'
@@ -72,6 +76,12 @@ fi
 source tasks/$task.sh
 
 echo "Logan analysis, task: $task"
+echo "Number of threads: $THREADS"
+# get instance type
+TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -s -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`
+instance_type=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-type)
+echo "Instance type: $instance_type"
+
 date
 df -h / /localdisk
 
@@ -94,7 +104,8 @@ counter=0
 # for each accession (represented as a s3 path), do the task (e.g. copy)
 for s3elt in $(cat s3file.txt)
 do
-	task $s3elt $OUTBUCKET
+    # currently $OUTBUCKET is not read
+	task $s3elt $THREADS $OUTBUCKET
     counter=$((counter + 1))
     echo "Logan analysis: $counter of $nb_files tasks completed."
 done

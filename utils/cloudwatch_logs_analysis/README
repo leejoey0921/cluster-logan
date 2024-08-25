@@ -2,3 +2,23 @@ the beforejuly's:
 I've found which accessions are bad (by substracting the good)
 but I didn't rerun them
 it's 111k accs, but 2 Pbp in size (5% of SRA)
+
+
+regarding the size of accs that trigger signal 9:
+165979 jobs recorded, 17002200 accessions total
+478788 signal's recorded (typically signal9), 2.81603557186717% of total
+4 jobs with signal but no accession
+Total accessions: 17002200
+Crashed accessions: 478788
+Non-crashed accessions: 16523412
+
+Crashed accessions size statistics:
+Mean: 1972.65 Mbytes
+Standard deviation: 1807.51 Mbytes
+Min: 0.00 Mbytes (0.00018787384033203125, 'ERR11949085')
+
+Non-crashed accessions size statistics:
+Mean: 26.09 Mbytes
+Standard deviation: 92.50 Mbytes
+Max: 49413.67 Mbytes
+
