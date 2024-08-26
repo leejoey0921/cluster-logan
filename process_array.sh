@@ -2,7 +2,7 @@
 
 # changeme
 jobqueue=LoganAnalysisJobQueueDisques
-vcpus=32 # important, is also passed to container
+vcpus=2 # important, is also passed to container
 jobdef=logan-analysis-${vcpus}c-job
 
 #jobdef=logan-analysis-nodisk-1c-job
@@ -13,7 +13,7 @@ outputbucket=$1
 nbsplit=$2
 dryrun=$3
 
-JOBTIMEOUT=80000 # 22 hour max per job
+JOBTIMEOUT=44000 # 12 hour max per job
 # for copy, timelimit was 40000, aiming at > 20 GB/hour processed by core, should be around 140 GB/hour when all alone
 
 echo "Running process_array.sh with params"

@@ -19,7 +19,9 @@ So far this setup has only been tested on `c5d` instances because tasks are rely
 
 - If needed to make adjustments to the stack, do them and run `spinupd.sh --update ` and check your Cloudformation to make sure the stack is `UPDATE_COMPLETE`.
 
-## Running in production
+## Checklist for running in production
+
+Prepare your data in the `analyses/` folder, see previous runs for an example of file organization.
 
 In the ̀`batch/` folder:
 
@@ -34,19 +36,23 @@ In the ̀`batch/` folder:
 3) Run `deploy-docker.sh` to upload the container.
 
 
-In the root folder of this repository:
+Go to the root folder of this repository. Pay attention to the output bucket names bucket hard coded in `run_*.sh` (`serratus-rayan`).
 
-0) Modify `process_array.sh` to correct `jobdef` (`logan-analysis-2c-job` should be fine, jobs will be 2 cores and 3.5 GB RAM, DIAMOND needs that).
 
-1) Put your list of accessions in `sets/mylist.txt` and `echo mylist > set`, change ̀`mylist` to any useful name.
+0) Modify the `vcpus` variable in `process_array.sh` to correct `jobdef`. 2 vcpus, i.e. `jobdef=logan-analysis-2c-job` should be fine, jobs will be 2 cores and 3.5 GB RAM, DIAMOND needs at least that.
 
-2) Run `process_array.sh [dest_bucket] [nb_jobs]`
+1) Run `run_test.sh` to see that it works at all.
 
-Where `dest_bucket` is the name of the destination bucket, and `nb_jobs` is the number of jobs to submit (can't exceed 10000). The more jobs, the faster it will be. Each job takes 1 vcpu and 1.5G memory. Destination bucket file structure is decided by the task.
+2) Run `run_pilot.sh` to get an estimate of the costs
+
+2) Run `run_many.sh` for the big run on all Logan contigs.
+
+Behind the scenes, these scripts call `process_array.sh [dest_bucket] [nb_jobs]`. Where `dest_bucket` is the name of the destination bucket, and `nb_jobs` is the number of jobs to submit (can't exceed 10000). The more jobs, the faster it will be. Destination bucket file structure is decided by the task.
 
 ## Running tests
 
 Run `test_docker.sh` for a local test.
+
 Modify and run `run_test.sh` for a Batch test job, then `run_pilot.sh` for an estimation of costs. Those scripts have a hardcoded output bucket name that needs to be changed.
 
 ## Cleanup

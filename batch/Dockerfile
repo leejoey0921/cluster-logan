@@ -80,8 +80,11 @@ RUN wget https://github.com/lh3/minimap2/releases/download/v2.28/minimap2-2.28_x
 #RUN aws s3 cp s3://serratus-rayan/beetles/july1.dmnd . --no-sign-request
 #RUN aws s3 cp s3://serratus-rayan/beetles/july1.dmnd.seed_idx . --no-sign-request
 #RUN aws s3 cp s3://serratus-rayan/beetles/rep12.fa . --no-sign-request
-RUN aws s3 cp s3://serratus-rayan/beetles/aug24.dmnd . --no-sign-request
-RUN aws s3 cp s3://serratus-rayan/beetles/aug24.dmnd.seed_idx . --no-sign-request
+#RUN aws s3 cp s3://serratus-rayan/beetles/aug24.dmnd . --no-sign-request
+#RUN aws s3 cp s3://serratus-rayan/beetles/aug24.dmnd.seed_idx . --no-sign-request
+RUN aws s3 cp s3://serratus-rayan/beetles/aug26.fna . --no-sign-request
+RUN aws s3 cp s3://serratus-rayan/beetles/aug26.dmnd . --no-sign-request
+RUN aws s3 cp s3://serratus-rayan/beetles/aug26.dmnd.seed_idx . --no-sign-request
 
 # Copy Scripts
 COPY logan-analysis.sh /
