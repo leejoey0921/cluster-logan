@@ -1,0 +1,11 @@
+total 49068
+-rw-rw-r-- 1 ec2-user ec2-user        0 Aug 26 19:55 LIST
+-rw-rw-r-- 1 ec2-user ec2-user  2701059 Jul  1 18:45 anello2.faa
+-rw-rw-r-- 1 ec2-user ec2-user  4901049 Jul  5 14:43 july1.dmnd
+-rw-rw-r-- 1 ec2-user ec2-user 33554832 Jul  5 14:43 july1.dmnd.seed_idx
+-rw-rw-r-- 1 ec2-user ec2-user  4822137 Jul  5 14:43 july1.faa
+-rw-rw-r-- 1 ec2-user ec2-user      336 Jul  5 13:10 july1.sh
+-rw-rw-r-- 1 ec2-user ec2-user  2121421 Jul  1 18:45 pv2.faa.old
+-rw-rw-r-- 1 ec2-user ec2-user  2121078 Jul  5 13:09 pv3.faa
+-rw-rw-r-- 1 ec2-user ec2-user     2027 Jul  1 18:46 rep12.fa
+drwxrwxr-x 2 ec2-user ec2-user     4096 Aug 24 20:11 results

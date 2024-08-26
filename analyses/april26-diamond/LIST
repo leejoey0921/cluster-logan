@@ -1,0 +1,20 @@
+total 2451364
+-rw-rw-r-- 1 ec2-user ec2-user         0 Aug 26 19:55 LIST
+-rw-rw-r-- 1 ec2-user ec2-user      1803 May  6 06:49 LS
+-rw-r--r-- 1 ec2-user ec2-user   5299701 Apr 26 05:25 SRR5712171.contigs.fa
+-rw-r--r-- 1 ec2-user ec2-user   1511189 Apr 26 05:25 SRR5712171.contigs.fa.zst
+-rw-rw-r-- 1 ec2-user ec2-user       531 Apr 26 05:41 STB.fa
+-rw-rw-r-- 1 ec2-user ec2-user 557170878 Apr 26 05:28 all.palmcore.id90.faa
+-rw-rw-r-- 1 ec2-user ec2-user 802992829 Apr 27 06:21 april26.dmnd
+-rw-rw-r-- 1 ec2-user ec2-user 754996625 Apr 27 06:21 april26.faa
+-rw-rw-r-- 1 ec2-user ec2-user       169 Jul  1 19:03 april26.sh
+-rw-rw-r-- 1 ec2-user ec2-user   1472809 Apr  4 16:57 coxdb_v1.fa
+-rw-rw-r-- 1 ec2-user ec2-user 195363678 Apr 26 05:27 coxdb_v1_and_translate_best_id90.faa
+-rw-rw-r-- 1 ec2-user ec2-user      8432 Apr 27 06:21 dag.v7.faa
+-rw-rw-r-- 1 ec2-user ec2-user    448904 Apr 27 06:21 obli_v2.faa
+-rw-rw-r-- 1 ec2-user ec2-user      2462 Apr 27 06:21 osiris_v1.faa
+drwxrwxr-x 4 ec2-user ec2-user      4096 Aug  5 06:20 plot
+-rw-rw-r-- 1 ec2-user ec2-user   2002271 Apr 27 06:21 pv_v1.faa
+drwxrwxr-x 3 ec2-user ec2-user      4096 Jul 26 05:47 results
+-rw-rw-r-- 1 ec2-user ec2-user       235 Apr 26 05:17 scre2.faa.bak
+-rw-rw-r-- 1 ec2-user ec2-user 188876118 Apr  5 03:00 translate_best.id90.fa

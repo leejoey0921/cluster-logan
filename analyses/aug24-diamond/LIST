@@ -1,0 +1,10 @@
+total 105244
+-rw-rw-r-- 1 ec2-user ec2-user        0 Aug 26 19:55 LIST
+-rw-rw-r-- 1 ec2-user ec2-user   261540 Aug 24 21:21 P4.faa
+-rw-rw-r-- 1 ec2-user ec2-user       85 Aug 24 21:20 add_prefix.sh
+-rw-rw-r-- 1 ec2-user ec2-user 32222941 Aug 24 21:29 aug24.dmnd
+-rw-rw-r-- 1 ec2-user ec2-user 16777256 Aug 24 21:29 aug24.dmnd.seed_idx
+-rw-rw-r-- 1 ec2-user ec2-user 29375173 Aug 24 21:29 aug24.faa
+-rw-rw-r-- 1 ec2-user ec2-user      320 Aug 24 21:25 aug24.sh
+-rw-rw-r-- 1 ec2-user ec2-user   448904 Aug 24 21:24 obli_v2.faa
+-rw-rw-r-- 1 ec2-user ec2-user 28664729 Aug 24 21:24 uniref30_2302_virus_shallow.faa
