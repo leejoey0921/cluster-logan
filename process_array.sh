@@ -61,6 +61,10 @@ split_and_upload() {
     partfolder=array_${size}_$timestamp/
     mkdir -p $partfolder
 	split -a 5 -d -n l/$nbsplit $file $partfolder
+    if [ "$?" -ne 0 ]; then 
+        echo "Unknown error while splitting set into $nbsplit chunks"
+        exit 1
+    fi
 	nb_parts=$(ls "$partfolder"*  2>/dev/null | wc -l)
 	if [ "$nb_parts" -gt $nbsplit ]; then
         echo "error: more array jobs ($nb_parts) than the number asked to split ($nbsplit)"

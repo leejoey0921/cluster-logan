@@ -90,6 +90,9 @@ df -h / /localdisk
 if [[ -z "${AWS_BATCH_JOB_ARRAY_INDEX-}" ]]
 then
     echo "Not an array job"
+    echo "Is this supported? I haven't bothered implementing just 1 input file"
+    echo "If this crashes, fix the bug, or just add s3://logan-pub/c/DRR000001/DRR000001.contigs.fa.zst to your input so that it has at least 2 files.."
+    #exit 1
 else
     echo "Array job: ${AWS_BATCH_JOB_ARRAY_INDEX-}"
     printf -v padded_number "%05d" ${AWS_BATCH_JOB_ARRAY_INDEX-}
