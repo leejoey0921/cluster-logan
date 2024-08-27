@@ -35,7 +35,7 @@ To create a new task to run at scale, follow the steps below:
 
 ## Setup to run in production
 
-You don't need to do this section if all you do is test the container locally. Read on if you're going to run analyses on cloud.
+You don't need to do this section if all you do is test the container locally. Read on if you're going to run analyses on cloud yourself (unlikely).
 
 So far this setup has only been tested on `c5d` instances because tasks are relying on a local disk to download contig files.
 
@@ -46,6 +46,8 @@ So far this setup has only been tested on `c5d` instances because tasks are rely
 - If needed to make adjustments to the stack, do them and run `spinupd.sh --update ` and check your Cloudformation to make sure the stack is `UPDATE_COMPLETE`.
 
 ## Checklist for running in production
+
+Again, no need to do this section unless you're the maintainer (typically, Rayan).
 
 Prepare your data in the `analyses/` folder, see previous runs for an example of file organization.
 
