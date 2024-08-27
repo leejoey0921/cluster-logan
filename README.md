@@ -47,7 +47,7 @@ So far this setup has only been tested on `c5d` instances because tasks are rely
 
 ## Checklist for running in production
 
-Again, no need to do this section unless you're the maintainer (typically, Rayan).
+This is a rehash of the two previous sections. No need to do this section if you're testing locally.
 
 Prepare your data in the `analyses/` folder, see previous runs for an example of file organization.
 
