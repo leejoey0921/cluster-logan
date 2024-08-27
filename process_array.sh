@@ -68,10 +68,12 @@ split_and_upload() {
 	nb_parts=$(ls "$partfolder"*  2>/dev/null | wc -l)
 	if [ "$nb_parts" -gt $nbsplit ]; then
         echo "error: more array jobs ($nb_parts) than the number asked to split ($nbsplit)"
+        echo "make sure to cleanup $partfolder"
 		exit 1
 	fi
     if [ "$nb_parts" -gt 10000 ]; then
         echo "error: array job has more jobs ($nb_parts) than allowed (10000)"
+        echo "make sure to cleanup $partfolder"
         exit 1
     fi
     MAYBEDRY=""
