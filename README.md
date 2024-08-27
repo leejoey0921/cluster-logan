@@ -83,6 +83,14 @@ Run `test_docker.sh` for a local test.
 
 Modify and run `run_test.sh` for a Batch test job, then `run_pilot.sh` for an estimation of costs. Those scripts have a hardcoded output bucket name that needs to be changed.
 
+## Dealing with 27 million files
+
+Typical result of a Logan analysis run is 27 million Diamond output files. Handling this many files can be a challenge. Some lessons learned:
+
+1. For batch download, always use `--recursive` in `aws s3 cp` or `/*` in `s5cmd`. It is too slow to execute 27 million commands, even in parallel. Best solution I could find is to modify and use `utils/parallel_download.sh`.
+
+2. For aggregating results into a smaller number of files, use `utils/package_diamond.sh` on the results of the parallel download above. Best is to end up with ~100 files instead of just 1, allows for further multithreading.
+
 ## Cleanup
 
 Manually delete the CloudFormation stack. Also delete the ECR image. 

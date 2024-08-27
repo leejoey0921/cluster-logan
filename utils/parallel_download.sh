@@ -9,15 +9,16 @@ set -ex
 for prefix in DRR ERR SRR ;do
     for prefix2 in $(seq 0 9) ;do
         p=${prefix}${prefix2}
-        mkdir -p $outfolder
         if [[ "$p" == "SRR1" || "$p" == "SRR2" || "$p" == "ERR1" ]]; then
             for subprefix in $(seq 0 9); do
                 subp=${p}${subprefix}
                 outfolder=data3/$subp/
+                mkdir -p $outfolder
                 \time s5cmd cp --flatten s3://serratus-rayan/$folder/${subp}* $outfolder >/dev/null &
             done
         else
                 outfolder=data3/$p/
+                mkdir -p $outfolder
                 \time s5cmd cp --flatten s3://serratus-rayan/$folder/${p}* $outfolder >/dev/null &
         fi
     done
