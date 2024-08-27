@@ -5,20 +5,21 @@ it's 111k accs, but 2 Pbp in size (5% of SRA)
 
 
 regarding the size of accs that trigger signal 9:
-165979 jobs recorded, 17002200 accessions total
-478788 signal's recorded (typically signal9), 2.81603557186717% of total
-4 jobs with signal but no accession
-Total accessions: 17002200
-Crashed accessions: 478788
-Non-crashed accessions: 16523412
+
+260977 jobs recorded, 26769293 accessions total
+587969 signal's recorded (typically signal9), 2.1964308134697466% of total
+21 jobs with signal but no accession
+Total accessions: 26769293
+Crashed accessions: 587969
+Non-crashed accessions: 26181324
 
 Crashed accessions size statistics:
-Mean: 1972.65 Mbytes
-Standard deviation: 1807.51 Mbytes
-Min: 0.00 Mbytes (0.00018787384033203125, 'ERR11949085')
+Mean: 1752.33 Mbytes
+Standard deviation: 1699.89 Mbytes
+Min: 0.00 Mbytes (0.00015354156494140625, 'SRR12701649')
 
 Non-crashed accessions size statistics:
-Mean: 26.09 Mbytes
-Standard deviation: 92.50 Mbytes
+Mean: 22.12 Mbytes
+Standard deviation: 66.20 Mbytes
 Max: 49413.67 Mbytes
 
