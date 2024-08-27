@@ -1,19 +1,24 @@
 #folder=beetles/logan_april26_run/diamond
-folder=beetles/logan_april26_run/circles
+#folder=beetles/logan_april26_run/circles
+#folder=beetles/logan_july5_run/diamond
+#folder=beetles/logan_aug24_run/diamond
+folder=beetles/logan_aug26_run/minimap2
 
 set -ex
 
-cd data # always download elsewhere
 for prefix in DRR ERR SRR ;do
     for prefix2 in $(seq 0 9) ;do
         p=${prefix}${prefix2}
-                if [[ "$p" == "SRR1" || "$p" == "SRR2" ]]; then
+        mkdir -p $outfolder
+        if [[ "$p" == "SRR1" || "$p" == "SRR2" || "$p" == "ERR1" ]]; then
             for subprefix in $(seq 0 9); do
                 subp=${p}${subprefix}
-                \time s5cmd cp s3://serratus-rayan/$folder/${subp}* . >/dev/null &
+                outfolder=data3/$subp/
+                \time s5cmd cp --flatten s3://serratus-rayan/$folder/${subp}* $outfolder >/dev/null &
             done
-                else
-                \time s5cmd cp s3://serratus-rayan/$folder/${p}* . >/dev/null &
+        else
+                outfolder=data3/$p/
+                \time s5cmd cp --flatten s3://serratus-rayan/$folder/${p}* $outfolder >/dev/null &
         fi
     done
 done

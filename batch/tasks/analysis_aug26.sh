@@ -52,6 +52,7 @@ task() {
         touch $accession.corrupt
         s5cmd cp $accession.corrupt s3://serratus-rayan/logan_corrupt_contigs/
         # here we want to just ignore that accession and continue
+        echo "Corrupt accession!"
 	    rm -Rf /localdisk/"$accession"
 		return 0 
 	fi
@@ -102,7 +103,7 @@ task() {
     } || true 
     [[ $empty_accession -eq 1 ]] && touch $diamond_output_file # make it upload an empty file if no hits
 	[[ $diamond_status -eq 0 && -f $diamond_output_file ]] && s5cmd cp -c 1 $diamond_output_file s3://serratus-rayan/beetles/logan_${outdate}_run/diamond/$accession/
-    [[ $diamond_status -ne 0 ]] && echo "Diamond failed, error code: $diamond_status"
+    [[ $diamond_status -ne 0 ]] && echo ("Diamond failed, error code: $diamond_status"; rm -Rf /localdisk/"$accession" ; return 1)
     rm -Rf tmp_$accession
 
     # minimap2

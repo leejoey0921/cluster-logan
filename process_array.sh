@@ -2,7 +2,7 @@
 
 # changeme
 jobqueue=LoganAnalysisJobQueueDisques
-vcpus=2 # important, is also passed to container
+vcpus=32 # important, is also passed to container
 jobdef=logan-analysis-${vcpus}c-job
 
 #jobdef=logan-analysis-nodisk-1c-job
