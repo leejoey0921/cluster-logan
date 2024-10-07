@@ -14,12 +14,12 @@ for prefix in DRR ERR SRR ;do
                 subp=${p}${subprefix}
                 outfolder=data3/$subp/
                 mkdir -p $outfolder
-                \time s5cmd cp --flatten s3://serratus-rayan/$folder/${subp}* $outfolder >/dev/null &
+                \time s5cmd cp -c 10 --flatten s3://serratus-rayan/$folder/${subp}* $outfolder >/dev/null &
             done
         else
                 outfolder=data3/$p/
                 mkdir -p $outfolder
-                \time s5cmd cp --flatten s3://serratus-rayan/$folder/${p}* $outfolder >/dev/null &
+                \time s5cmd cp -c 10 --flatten s3://serratus-rayan/$folder/${p}* $outfolder >/dev/null &
         fi
     done
 done

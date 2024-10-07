@@ -9,7 +9,8 @@ set -eu
 #task=analysis_april26
 #task=analysis_july1
 #task=analysis_aug24
-task=analysis_aug26
+#task=analysis_aug26
+task=analysis_oct7
 
 # Usage
 function usage {

@@ -2,12 +2,8 @@
 
 # changeme
 jobqueue=LoganAnalysisJobQueueDisques
-vcpus=32 # important, is also passed to container
+vcpus=1 # important, is also passed to container in the THREADS variable. number of vcpus per task.
 jobdef=logan-analysis-${vcpus}c-job
-
-#jobdef=logan-analysis-nodisk-1c-job
-#jobqueue=LoganAnalysisJobQueueC5A
-
 
 outputbucket=$1
 nbsplit=$2

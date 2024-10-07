@@ -74,6 +74,9 @@ RUN wget https://github.com/bbuchfink/diamond/releases/download/v2.1.9/diamond-l
 # minimap2
 RUN wget https://github.com/lh3/minimap2/releases/download/v2.28/minimap2-2.28_x64-linux.tar.bz2 && tar xf minimap2-2.28_x64-linux.tar.bz2  && mv minimap2-2.28_x64-linux/minimap2 /usr/local/bin
 
+#prodigal
+RUN aws s3 cp s3://serratus-rayan/tools/prodigal . --no-sign-request && chmod +x prodigal && mv prodigal /usr/local/bin/ 
+
 # copy diamond DB
 #RUN aws s3 cp s3://serratus-rayan/beetles/april26.dmnd . --no-sign-request
 #RUN aws s3 cp s3://serratus-rayan/beetles/STB.fa . --no-sign-request
