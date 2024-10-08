@@ -33,7 +33,7 @@ task() {
     THREADS=$2
     # disregards the third argument (output bucket), we're hardcoding output paths here
 
-    echo "Logan analysis ('back2back', august 2024) task for file: $s3file"
+    echo "Logan analysis ('copenhagen', october 2024) task for file: $s3file"
     filename=$(echo $s3file | awk -F/ '{print $NF}')
     accession=$(echo $filename | cut -d '.' -f1)
     filename_noz=${filename%.*}
@@ -82,16 +82,19 @@ task() {
 
 
     # prodigal 
+    #tool=pyrodigal # runs out of mem
+    tool=prodigal
     prodigal_status=0
-    prodigal_outfile=$accession.prodigal.fa.zst
+    prodigal_outfile=$accession.$tool.fa.zst
     [ -s $filename_noz ] && {
-    \time prodigal -q -i $filename_noz -p meta -o /dev/null -a $prodigal_outfile.interm.fa
+    \time prodigal -q      -i $filename_noz -p meta -o /dev/null -a $prodigal_outfile.interm.fa
+    #\time $tool -j $THREADS -i $filename_noz -p meta -o /dev/null -a $prodigal_outfile.interm.fa
     prodigal_status=$?
     cat $prodigal_outfile.interm.fa | seqtk seq -A |zstd -c > $prodigal_outfile
     }  || true
     [[ $empty_accession -eq 1 ]] && touch $prodigal_outfile
-	[[ $prodigal_status -eq 0 && -f $prodigal_outfile ]] && s5cmd cp -c 1 $prodigal_outfile s3://serratus-rayan/beetles/logan_${outdate}_run/prodigal/$accession/
-    [[ $prodigal_status -ne 0 ]] && echo "Minimap2 failed, error code: $prodigal_status"
+	[[ $prodigal_status -eq 0 && -f $prodigal_outfile ]] && s5cmd cp -c 1 $prodigal_outfile s3://serratus-rayan/beetles/logan_${outdate}_run/$tool/$accession/
+    [[ $prodigal_status -ne 0 ]] && echo "$tool failed, error code: $prodigal_status"
  
 	rm -Rf /localdisk/"$accession"
 	echo "Done with $accession"

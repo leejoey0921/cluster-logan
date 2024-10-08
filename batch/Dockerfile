@@ -76,6 +76,7 @@ RUN wget https://github.com/lh3/minimap2/releases/download/v2.28/minimap2-2.28_x
 
 #prodigal
 RUN aws s3 cp s3://serratus-rayan/tools/prodigal . --no-sign-request && chmod +x prodigal && mv prodigal /usr/local/bin/ 
+#RUN pip3 install pyrodigal
 
 # copy diamond DB
 #RUN aws s3 cp s3://serratus-rayan/beetles/april26.dmnd . --no-sign-request
