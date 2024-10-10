@@ -68,7 +68,16 @@ task() {
     else
 	    # decompress
         # also converts spaces in header to underscores to be included in diamond output
+        # !!!!!!!!!!!!!!!!!!!!!
+        # FIXME: filters accessions by size! specific to this prodigal task, be careful if you copypaste it
+        # !!!!!!!!!!!!!!!!!!!!!
         \time zstdcat $filename | seqtk seq -L 120 > $filename_noz
+        file2_size=$(stat -c %s "$filename_noz")
+	    if [[ -f $filename_noz && "$file2_size" -lt 30 ]]; then
+            echo "Filtered contigs file is smaller than 30 bytes, marking it as empty"
+            empty_accession=1
+        fi
+
     fi
     rm -f $filename # saves space
 
