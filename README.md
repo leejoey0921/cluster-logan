@@ -45,6 +45,7 @@ So far this setup has only been tested on `c5d` instances because tasks are rely
 
 - If needed to make adjustments to the stack, do them and run `spinupd.sh --update ` and check your Cloudformation to make sure the stack is `UPDATE_COMPLETE`.
 
+
 ## Checklist for running in production
 
 This is a rehash of the two previous sections. No need to do this section if you're testing locally.
@@ -87,9 +88,11 @@ Modify and run `run_test.sh` for a Batch test job, then `run_pilot.sh` for an es
 
 Typical result of a Logan analysis run is 27 million Diamond output files. Handling this many files can be a challenge. Some lessons learned:
 
-1. For batch download, always use `--recursive` in `aws s3 cp` or `/*` in `s5cmd`. It is too slow to execute 27 million commands, even in parallel. Best solution I could find is to modify and use `utils/parallel_download.sh`.
+1. For batch download, always use `--recursive` in `aws s3 cp` or `/*` in `s5cmd`. It is too slow to execute 27 million commands, even in parallel on a single machine. Best solution I could find is to modify and use `utils/parallel_download.sh`.
 
 2. For aggregating results into a smaller number of files, use `utils/package_diamond.sh` on the results of the parallel download above. Best is to end up with ~100 files instead of just 1, allows for further multithreading.
+
+3. Check out the `logan-aggregate` repo for more industrial-grade aggregation scripts.
 
 ## Cleanup
 

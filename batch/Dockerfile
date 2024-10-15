@@ -86,9 +86,10 @@ RUN aws s3 cp s3://serratus-rayan/tools/prodigal . --no-sign-request && chmod +x
 #RUN aws s3 cp s3://serratus-rayan/beetles/rep12.fa . --no-sign-request
 #RUN aws s3 cp s3://serratus-rayan/beetles/aug24.dmnd . --no-sign-request
 #RUN aws s3 cp s3://serratus-rayan/beetles/aug24.dmnd.seed_idx . --no-sign-request
-RUN aws s3 cp s3://serratus-rayan/beetles/aug26.fna . --no-sign-request
-RUN aws s3 cp s3://serratus-rayan/beetles/aug26.dmnd . --no-sign-request
-RUN aws s3 cp s3://serratus-rayan/beetles/aug26.dmnd.seed_idx . --no-sign-request
+#RUN aws s3 cp s3://serratus-rayan/beetles/aug26.fna . --no-sign-request
+#RUN aws s3 cp s3://serratus-rayan/beetles/aug26.dmnd . --no-sign-request
+#RUN aws s3 cp s3://serratus-rayan/beetles/aug26.dmnd.seed_idx . --no-sign-request
+RUN aws s3 cp s3://serratus-rayan/beetles/GCF_034140825.1_ASM3414082v1_genomic.fna.gz . --no-sign-request
 
 # Copy Scripts
 COPY logan-analysis.sh /

@@ -10,7 +10,8 @@ set -eu
 #task=analysis_july1
 #task=analysis_aug24
 #task=analysis_aug26
-task=analysis_oct7
+#task=analysis_oct7
+task=analysis_oct14
 
 # Usage
 function usage {
@@ -87,6 +88,8 @@ echo "Instance type: $instance_type"
 date
 df -h / /localdisk
 
+jobid=0
+
 # Check if Array Job
 if [[ -z "${AWS_BATCH_JOB_ARRAY_INDEX-}" ]]
 then
@@ -98,16 +101,18 @@ else
     echo "Array job: ${AWS_BATCH_JOB_ARRAY_INDEX-}"
     printf -v padded_number "%05d" ${AWS_BATCH_JOB_ARRAY_INDEX-}
     S3FILE="$S3FILE"$padded_number
+    jobid=$padded_number
 fi
 
 # grab the list of accessions
-s5cmd cp -c 1 $S3FILE s3file.txt
-nb_files=$(wc -l < s3file.txt)
+locals3file=s3file_$jobid.txt
+s5cmd cp -c 1 $S3FILE $locals3file
+nb_files=$(wc -l < $locals3file)
 echo "$nb_files files to process"
 counter=0
 
 # for each accession (represented as a s3 path), do the task (e.g. copy)
-for s3elt in $(cat s3file.txt)
+for s3elt in $(cat $locals3file)
 do
     # currently $OUTBUCKET is not read
 	task $s3elt $THREADS $OUTBUCKET
