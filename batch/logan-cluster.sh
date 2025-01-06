@@ -95,7 +95,7 @@ for i in $(seq -w 0 $((number_of_splits-1))); do
     db="db/${splitname}-db"
     rep="db/${splitname}-rep"
     clu="clu/${splitname}"
-    tsv="result/tsv/${splitname}.tsv"
+    tsv="result/tsv/${splitname}-clu.tsv"
     fasta="result/fa/${splitname}-rep.fa"
 
     echo "START: CREATEDB ${i}"
@@ -112,6 +112,20 @@ for i in $(seq -w 0 $((number_of_splits-1))); do
     time zstd $fasta && rm $fasta
 
     # TODO: decide whether to align reps to human genome
+    # aln="db/${splitname}-aln"
+
+    # # TODO: copy and unpack human orfs from S3
+    # orfs="db/orfs_aa"
+    # alntsv="result/tsv/${splitname}-rep-aln.tsv"
+    # alnrep="db/${splitname}-rep-alnfilter"
+    # alnfasta="result/fa/${splitname}-rep-alnfilter.fa"
+    # 
+    # time ./mmseqs search $rep $orfs $aln $tmp --threads $THREADS --min-seq-id 0.9 --exact-kmer-matching 1 --mask 0 --comp-bias-corr 0 --alignment-mode 4
+    # time ./mmseqs createtsv $rep $orfs $aln "${tsv}"
+    # extract seqs WITHOUT alignment to fasta
+    # time ./mmseqs filterdb $rep $alnrep --filter-file "${aln}.index" --positive-filter false
+    # time ./mmseqs convert2fasta $alnrep $alnfasta
+    # time zstd $alnfasta && rm $alnfasta
 
     # cleanup to free disk space
     rm "${db}"* "${rep}"* "${clu}"*
