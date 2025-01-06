@@ -104,7 +104,7 @@ for i in $(seq -w 0 $((number_of_splits-1))); do
     echo "COMPLETE: CREATEDB ${i}"
 
     echo "START: CLUSTER ${i}"
-    time ./mmseqs linclust $db $clu tmp -c 0.9 --cov-mode 1 --min-seq-id 0.3 --threads $THREADS
+    time ./mmseqs linclust $db $clu tmp -c 0.9 --cov-mode 1 --min-seq-id 0.9 --threads $THREADS
     time ./mmseqs createtsv $db $db $clu $tsv --threads $THREADS
     time zstd $tsv && rm $tsv
     time ./mmseqs createsubdb $clu $db $rep
