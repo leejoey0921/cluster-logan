@@ -14,87 +14,84 @@ date
 df -h / /localdisk
 
 jobid=0
-
-# job id (00000~00099)
 echo "Array job: ${AWS_BATCH_JOB_ARRAY_INDEX-}"
 printf -v padded_number "%05d" "${AWS_BATCH_JOB_ARRAY_INDEX-}"
 jobid=$padded_number
 
-# split_file(filename, split count, file line count, output prefix)
-# ex) filename=foo.fa -> prefix0.fa, prefix1.fa, ...
-split_file() {
-    local file="$1"
-    local number_of_splits="$2"
-    local line_count="$3"
-    local prefix="$4"
+s3fastaprefix="s3://serratus-rayan/beetles/logan_oct7_run/prodigal-concat/"
 
-    local lines_per_split=$(( (line_count + number_of_splits - 1) / number_of_splits ))
+# TODO: finalize s3 locations
+inputfilename="inputfile.txt"
+s3inputfile="s3://serratus-rayan/joey/logan-cluster/input/human/complete/${inputfilename}"
+s3resultprefix="s3://serratus-rayan/joey/logan-cluster/output/human/complete/"
 
-    split -l "${lines_per_split}" -d -a 1 "${file}" "${prefix}"
-
-    for i in $(seq 0 $((number_of_splits-1))); do
-        mv "${prefix}${i}" "${prefix}${i}.fa"
-    done
-}
+echo "START: DOWNLOAD INPUTFILE"
+s3 cp "${s3inputfile}" .
+echo "COMPLETE: DOWNLOAD INPUTFILE"
 
 
-partial="human-${jobid}-partial.fa"
-complete="human-${jobid}-complete.fa"
-s3prefix="s3://serratus-rayan/beetles/logan_oct7_run/prodigal-concat/"
+echo "START: PARSE JOB BLOCK"
+: '
+input file will be formatted like the following:
+00000
+file1.fa
+file2.fa
 
-# TODO: check output s3 location
-s3resultprefix="s3://serratus-rayan/joey/logan-cluster/"
+00001
+file3.fa
+'
+awk -v JOBID="$jobid" '
+  $0 == JOBID {reading=1; next}
+  /^[0-9]{5}$/ && $0 != JOBID && reading {exit}
+  reading && NF>0 {print}
+' "$inputfilename" > jobfiles.txt
+echo "COMPLETE: PARSE JOB BLOCK"
 
-# copy compressed fastas from s3
-aws s3 cp "${s3prefix}${partial}.zst" .
-aws s3 cp "${s3prefix}${complete}.zst" .
+echo "INPUT FILES:"
+cat jobfiles.txt
 
-# decompress files
-zstd -d "${partial}.zst"
-zstd -d "${complete}.zst"
+echo "START: DOWNLOAD FASTAS"
+fasta_list=""
+while read -r fname; do
+    s3 cp "${s3fastaprefix}/${fname}" .
+    echo "Copied: $fname"
+    zstd -d "$fname"
+    base="${fname%.*}"
+    fasta_list="${fasta_list} ${base}"
+done < jobfiles.txt
+echo "COMPLETE: DOWNLOAD FASTAS"
 
-# 8.5 billion (4.25 billion seqs)
 MAX_LINES=8500000000
 
 echo "START: SPLIT FASTA"
-# count lines
-lines_partial=$(wc -l < "${partial}")
-lines_complete=$(wc -l < "${complete}")
-sum_lines=$((lines_partial + lines_complete))
+mkdir -p split-chunks
+(
+  for f in $fasta_list; do
+    cat "$f"
+    rm "$f"
+  done
+) | split -l "$MAX_LINES" -d -a 3 - split-chunks/split-
 
-if [[ "${sum_lines}" -le "${MAX_LINES}" ]]; then
-    number_of_splits=1
-    mv "${partial}"  "human-${jobid}-partial-0.fa"
-    mv "${complete}" "human-${jobid}-complete-0.fa"
-else
-    # split file ceil(sum_lines / MAX_LINES)
-    number_of_splits=$(( (sum_lines + MAX_LINES - 1) / MAX_LINES ))
-
-    split_file "${partial}" "${number_of_splits}" "${lines_partial}" "human-${jobid}-partial-"
-    rm "${partial}"
-    split_file "${complete}" "${number_of_splits}" "${lines_complete}" "human-${jobid}-complete-"
-    rm "${complete}"
-fi
+for f in split-chunks/split-*; do
+    mv "$f" "$f.fa"
+done
 echo "COMPLETE: SPLIT FASTA"
 
 mkdir -p result/tsv result/fa
 
-for i in $(seq -w 0 $((number_of_splits-1))); do
-    mkdir db tmp clu
+i=0
+for split_file in split-chunks/split-*.fa; do
+    mkdir db tmp
 
-    partial_file="human-${jobid}-partial-${i}.fa"
-    complete_file="human-${jobid}-complete-${i}.fa"
-    splitname="human-${jobid}-${i}"
-
-    db="db/${splitname}-db"
-    rep="db/${splitname}-rep"
-    clu="clu/${splitname}"
-    tsv="result/tsv/${splitname}-clu.tsv"
-    fasta="result/fa/${splitname}-rep.fa"
+    db="db/db"
+    rep="db/rep"
+    clu="db/clu"
+    tsv="result/tsv/clu-${i}.tsv"
+    fasta="result/fa/rep-${i}.fa"
 
     echo "START: CREATEDB ${i}"
-    time mmseqs createdb "$partial_file" "$complete_file" "$db" --shuffle 0 --write-lookup 0 --createdb-mode 1
-    rm "$partial_file" "$complete_file"
+    time mmseqs createdb "$split_file" "$db" --shuffle 0 --write-lookup 0 --createdb-mode 1
+    rm "$split_file"
     echo "COMPLETE: CREATEDB ${i}"
 
     echo "START: CLUSTER ${i}"
@@ -107,7 +104,6 @@ for i in $(seq -w 0 $((number_of_splits-1))); do
     aws s3 cp "${tsv}.zst" "${s3resultprefix}tsv/" && rm "${tsv}.zst"
     echo "COMPLETE: COPY CLUSTER TSV ${i} TO S3"
 
-
     echo "START: COPY REP FASTA ${i} TO S3"
     time mmseqs createsubdb "$clu" "$db" "$rep" --subdb-mode 1
     time mmseqs convert2fasta "$rep" "$fasta"
@@ -115,10 +111,9 @@ for i in $(seq -w 0 $((number_of_splits-1))); do
     aws s3 cp "${fasta}.zst" "${s3resultprefix}fa/" && rm "${fasta}.zst"
     echo "COMPLETE: COPY REP FASTA ${i} TO S3"
 
-    # cleanup to free disk space
     rm -rf db tmp clu
+    i=$((i+1))
 done
-
 
 echo "Logan cluster, all done!"
 date
