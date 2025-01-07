@@ -78,8 +78,6 @@ RUN wget https://github.com/lh3/minimap2/releases/download/v2.28/minimap2-2.28_x
 RUN aws s3 cp s3://serratus-rayan/tools/prodigal . --no-sign-request && chmod +x prodigal && mv prodigal /usr/local/bin/ 
 #RUN pip3 install pyrodigal
 
-# TODO: install mmseqs/2
-
 # copy diamond DB
 #RUN aws s3 cp s3://serratus-rayan/beetles/april26.dmnd . --no-sign-request
 #RUN aws s3 cp s3://serratus-rayan/beetles/STB.fa . --no-sign-request
@@ -91,12 +89,12 @@ RUN aws s3 cp s3://serratus-rayan/tools/prodigal . --no-sign-request && chmod +x
 #RUN aws s3 cp s3://serratus-rayan/beetles/aug26.fna . --no-sign-request
 #RUN aws s3 cp s3://serratus-rayan/beetles/aug26.dmnd . --no-sign-request
 #RUN aws s3 cp s3://serratus-rayan/beetles/aug26.dmnd.seed_idx . --no-sign-request
-#RUN aws s3 cp s3://serratus-rayan/beetles/GCF_034140825.1_ASM3414082v1_genomic.fna.gz . --no-sign-request
+RUN aws s3 cp s3://serratus-rayan/beetles/GCF_034140825.1_ASM3414082v1_genomic.fna.gz . --no-sign-request
 
 # Copy Scripts
-COPY logan-cluster.sh /
-#RUN mkdir /tasks
-#COPY tasks/* /tasks/
+COPY logan-analysis.sh /
+RUN mkdir /tasks
+COPY tasks/* /tasks/
 
 # (for local testing ; will be already mounted in Batch production)
 RUN mkdir -p /localdisk
@@ -108,11 +106,11 @@ RUN mkdir -p /localdisk
 # because I don't want to test the edge cases where a filesize is around
 # the part limit.
 # Configure AWS Locally
-RUN chmod 755 logan-cluster.sh  \
+RUN chmod 755 logan-analysis.sh  \
  && aws configure set default.region us-east-1 \
  && aws configure set default.s3.multipart_threshold 4GB \
  && aws configure set default.s3.multipart_chunksize 4GB
 #==========================================================
 # ENTRYPOINT ==============================================
 #==========================================================
-ENTRYPOINT ["./logan-cluster.sh"]
+ENTRYPOINT ["./logan-analysis.sh"]
