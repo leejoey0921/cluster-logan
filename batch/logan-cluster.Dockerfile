@@ -1,5 +1,4 @@
 # Build mmseqs
-ARG APP=mmseqs
 FROM debian:bookworm-slim AS builder
 RUN apt-get update \
     && apt-get install -y \
@@ -18,7 +17,7 @@ RUN git clone https://github.com/ChunShow/MMseqs2.git; cd MMseqs2; \
 
 # Docker Base: amazon linux 2023
 FROM amazonlinux:2023
-COPY --from=builder /opt/build/MMseqs2/build/src/${APP} /usr/local/bin/
+COPY --from=builder /opt/build/MMseqs2/build/src/mmseqs /usr/local/bin/
 
 ARG PROJECT='logan-analysis'
 ARG TYPE='runtime'

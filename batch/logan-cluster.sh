@@ -4,24 +4,9 @@
 # =====================================
 set -euo pipefail
 
-
-while getopts i:o:t:vh FLAG; do
-  case $FLAG in
-    t)
-      THREADS=$OPTARG
-      ;;
-    \?) #unrecognized option - show help
-      echo "Input parameter not recognized"
-      usage
-      ;;
-  esac
-done
-
-
 echo "Logan cluster"
-echo "Number of threads: $THREADS"
 # get instance type
-TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -s -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -s -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
 instance_type=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-type)
 echo "Instance type: $instance_type"
 
@@ -32,8 +17,7 @@ jobid=0
 
 # job id (00000~00099)
 echo "Array job: ${AWS_BATCH_JOB_ARRAY_INDEX-}"
-printf -v padded_number "%05d" ${AWS_BATCH_JOB_ARRAY_INDEX-}
-S3FILE="$S3FILE"$padded_number
+printf -v padded_number "%05d" "${AWS_BATCH_JOB_ARRAY_INDEX-}"
 jobid=$padded_number
 
 # split_file(filename, split count, file line count, output prefix)
@@ -58,9 +42,16 @@ partial="human-${jobid}-partial.fa"
 complete="human-${jobid}-complete.fa"
 s3prefix="s3://serratus-rayan/beetles/logan_oct7_run/prodigal-concat/"
 
+# TODO: check output s3 location
+s3resultprefix="s3://serratus-rayan/joey/logan-cluster/"
+
 # copy compressed fastas from s3
 aws s3 cp "${s3prefix}${partial}.zst" .
 aws s3 cp "${s3prefix}${complete}.zst" .
+
+# decompress files
+zstd -d "${partial}.zst"
+zstd -d "${complete}.zst"
 
 # 8.5 billion (4.25 billion seqs)
 MAX_LINES=8500000000
@@ -86,9 +77,11 @@ else
 fi
 echo "COMPLETE: SPLIT FASTA"
 
-mkdir -p db tmp clu result/tsv result/fa
+mkdir -p result/tsv result/fa
 
 for i in $(seq -w 0 $((number_of_splits-1))); do
+    mkdir db tmp clu
+
     partial_file="human-${jobid}-partial-${i}.fa"
     complete_file="human-${jobid}-complete-${i}.fa"
     splitname="human-${jobid}-${i}"
@@ -100,29 +93,32 @@ for i in $(seq -w 0 $((number_of_splits-1))); do
     fasta="result/fa/${splitname}-rep.fa"
 
     echo "START: CREATEDB ${i}"
-    time ./mmseqs createdb $partial_file $complete_file $db --shuffle 0 --write-lookup 0
-    rm $partial_file $complete_file
+    time mmseqs createdb "$partial_file" "$complete_file" "$db" --shuffle 0 --write-lookup 0 --createdb-mode 1
+    rm "$partial_file" "$complete_file"
     echo "COMPLETE: CREATEDB ${i}"
 
     echo "START: CLUSTER ${i}"
-    time ./mmseqs linclust $db $clu tmp -c 0.9 --cov-mode 1 --min-seq-id 0.9 --threads $THREADS
-    time ./mmseqs createtsv $db $db $clu $tsv --threads $THREADS
-    time zstd $tsv && rm $tsv
-    time ./mmseqs createsubdb $clu $db $rep
-    time ./mmseqs convert2fasta $rep $fasta
-    time zstd $fasta && rm $fasta
+    time mmseqs linclust "$db" "$clu" tmp -c 0.9 --cov-mode 1 --min-seq-id 0.9 --match-adjacent-seq 1 --remove-tmp-files 1
+    echo "COMPLETE: CLUSTER ${i}"
+
+    echo "START: STORE CLUSTER TSV ${i} TO S3"
+    time mmseqs createtsv "$db" "$db" "$clu" "$tsv"
+    time zstd "$tsv" && rm "$tsv"
+    aws s3 cp "${tsv}.zst" "${s3resultprefix}tsv/" && rm "${tsv}.zst"
+    echo "COMPLETE: COPY CLUSTER TSV ${i} TO S3"
+
+
+    echo "START: COPY REP FASTA ${i} TO S3"
+    time mmseqs createsubdb "$clu" "$db" "$rep" --subdb-mode 1
+    time mmseqs convert2fasta "$rep" "$fasta"
+    time zstd "$fasta" && rm "$fasta"
+    aws s3 cp "${fasta}.zst" "${s3resultprefix}fa/" && rm "${fasta}.zst"
+    echo "COMPLETE: COPY REP FASTA ${i} TO S3"
 
     # cleanup to free disk space
-    rm "${db}"* "${rep}"* "${clu}"*
-    rm -r tmp/*
-    echo "COMPLETE: CLUSTER ${i}"
+    rm -rf db tmp clu
 done
 
-# TODO: check output s3 location
-# store result to S3
-s3resultprefix="s3://serratus-rayan/joey/logan-cluster/"
-aws s3 cp result/tsv/* "${s3resultprefix}tsv/"
-aws s3 cp result/fa/* "${s3resultprefix}fa/"
 
 echo "Logan cluster, all done!"
 date
