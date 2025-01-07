@@ -86,7 +86,8 @@ else
 fi
 echo "COMPLETE: SPLIT FASTA"
 
-mkdir db tmp clu result
+mkdir -p db tmp clu result/tsv result/fa
+
 for i in $(seq -w 0 $((number_of_splits-1))); do
     partial_file="human-${jobid}-partial-${i}.fa"
     complete_file="human-${jobid}-complete-${i}.fa"
