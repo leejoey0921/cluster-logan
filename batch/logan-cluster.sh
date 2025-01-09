@@ -91,7 +91,6 @@ for split_file in split-chunks/split-*.fa; do
 
     echo "START: CREATEDB ${i}"
     time mmseqs createdb "$split_file" "$db" --shuffle 0 --write-lookup 0 --createdb-mode 1
-    rm "$split_file"
     echo "COMPLETE: CREATEDB ${i}"
 
     echo "START: CLUSTER ${i}"
@@ -111,10 +110,11 @@ for split_file in split-chunks/split-*.fa; do
     aws s3 cp "${fasta}.zst" "${s3resultprefix}fa/" && rm "${fasta}.zst"
     echo "COMPLETE: COPY REP FASTA ${i} TO S3"
 
-    rm -rf db tmp clu
+    rm -rf db tmp clu "$split_file"
     i=$((i+1))
+    echo "STATUS CHECK AFTER ${i}th SPLIT RUN"
+    date
+    df -h / /localdisk
 done
 
-echo "Logan cluster, all done!"
-date
-df -h / /localdisk
+echo "COMPLETE"
