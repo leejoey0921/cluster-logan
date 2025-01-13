@@ -20,10 +20,9 @@ jobid=$padded_number
 
 s3fastaprefix="s3://serratus-rayan/beetles/logan_oct7_run/prodigal-concat/"
 
-# TODO: finalize s3 locations
 inputfilename="inputfile.txt"
-s3inputfile="s3://serratus-rayan/joey/logan-cluster/input/human/complete/${inputfilename}"
-s3resultprefix="s3://serratus-rayan/joey/logan-cluster/output/human/complete/"
+s3inputfile="s3://logan-cluster/input/human/complete/${inputfilename}"
+s3resultprefix="s3://logan-cluster/output/human/complete/"
 
 echo "START: DOWNLOAD INPUTFILE"
 s3 cp "${s3inputfile}" .
