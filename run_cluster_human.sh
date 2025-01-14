@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
 # changeme
-jobqueue=LoganClusterJobQueueDisques
-jobdef=logan-cluster--job
+jobqueue=LoganClusteringJobQueueDisques
+jobdef=logan-clustering-job
 
 dryrun=$1
 
@@ -11,7 +11,7 @@ JOBTIMEOUT=172800 # 48 hour max per job
 # TODO: FIX
 JOBSIZE=100 # human-00000 to human-00099
 
-echo "Running process_array_cluster.sh with params"
+echo "Running run_cluster_human.sh with params"
 echo "jobqueue=$jobqueue"
 echo "jobdef=$jobdef"
 
@@ -25,7 +25,7 @@ fi
 set=$(cat set)
 date=$(date +"%F")
 arch=$(uname -m)
-tag=logan-cluster-$arch-$date-$set
+tag=logan-clustering-$arch-$date-$set
 echo "tag: $tag"
 
 $MAYBEDRY aws batch submit-job \

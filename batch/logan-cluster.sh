@@ -4,6 +4,8 @@
 # =====================================
 set -euo pipefail
 
+mkdir logan-cluster-run && cd logan-cluster-run
+
 echo "Logan cluster"
 # get instance type
 TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -s -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -25,7 +27,7 @@ s3inputfile="s3://logan-cluster/input/human/complete/${inputfilename}"
 s3resultprefix="s3://logan-cluster/output/human/complete/"
 
 echo "START: DOWNLOAD INPUTFILE"
-s3 cp "${s3inputfile}" .
+aws s3 cp "${s3inputfile}" .
 echo "COMPLETE: DOWNLOAD INPUTFILE"
 
 
@@ -52,7 +54,7 @@ cat jobfiles.txt
 echo "START: DOWNLOAD FASTAS"
 fasta_list=""
 while read -r fname; do
-    s3 cp "${s3fastaprefix}/${fname}" .
+    aws s3 cp "${s3fastaprefix}${fname}" .
     echo "Copied: $fname"
     zstd -d "$fname"
     base="${fname%.*}"
