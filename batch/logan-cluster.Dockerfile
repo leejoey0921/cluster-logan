@@ -1,21 +1,21 @@
-# Build mmseqs
+# Build MMseqs2 natively on ARM64
 FROM debian:bookworm-slim AS builder
 RUN apt-get update \
     && apt-get install -y \
       build-essential cmake xxd git wget \
      zlib1g-dev libbz2-dev libatomic1 && \
-    rm -rf /var/lib/apt/lists/*;
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/build
 RUN git clone https://github.com/ChunShow/MMseqs2.git; cd MMseqs2; \
     git checkout -b new_linclust origin/new_linclust; \
     mkdir build; cd build; \
-    cmake -DHAVE_AVX2=1 -DHAVE_MPI=0 -DHAVE_TESTS=0 -DCMAKE_BUILD_TYPE=Release \
+    cmake -DHAVE_ARM8=1 -DHAVE_MPI=0 -DHAVE_TESTS=0 -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=OFF -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++" \
         -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" -DCMAKE_INSTALL_PREFIX=. ..; \
     make -j $(nproc --all);
 
-# Docker Base: amazon linux 2023
+# Base image: Amazon Linux 2023
 FROM amazonlinux:2023
 COPY --from=builder /opt/build/MMseqs2/build/src/mmseqs /usr/local/bin/
 
@@ -23,8 +23,7 @@ ARG PROJECT='logan-analysis'
 ARG TYPE='runtime'
 ARG VERSION='0.0.1'
 
-# Additional Metadata
-LABEL container.base.image="amazonlinux:2"
+LABEL container.base.image="amazonlinux:2023"
 LABEL project.name=${PROJECT}
 LABEL project.website="https://gitlab.pasteur.fr/rchikhi_pasteur/logan-analysis"
 LABEL container.type=${TYPE}
@@ -42,7 +41,7 @@ RUN python3 -m ensurepip
 # AWS S3
 ENV PIP_ROOT_USER_ACTION=ignore
 RUN pip3 install boto3
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" &&\
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip &&\
     ./aws/install
 

@@ -20,11 +20,11 @@ echo "Array job: ${AWS_BATCH_JOB_ARRAY_INDEX-}"
 printf -v padded_number "%05d" "${AWS_BATCH_JOB_ARRAY_INDEX-}"
 jobid=$padded_number
 
-s3fastaprefix="s3://serratus-rayan/beetles/logan_oct7_run/prodigal-concat/"
+s3fastaprefix="s3://logan-cluster/test/"
 
 inputfilename="inputfile.txt"
-s3inputfile="s3://logan-cluster/input/human/complete/${inputfilename}"
-s3resultprefix="s3://logan-cluster/output/human/complete/"
+s3inputfile="s3://logan-cluster/test/${inputfilename}"
+s3resultprefix="s3://logan-cluster/test/"
 
 echo "START: DOWNLOAD INPUTFILE"
 aws s3 cp "${s3inputfile}" .
@@ -62,7 +62,7 @@ while read -r fname; do
 done < jobfiles.txt
 echo "COMPLETE: DOWNLOAD FASTAS"
 
-MAX_LINES=8500000000
+MAX_LINES=350
 
 echo "START: SPLIT FASTA"
 mkdir -p split-chunks

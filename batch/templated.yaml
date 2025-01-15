@@ -19,21 +19,20 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Logan Analysis Cloudformation template for instances d
+Description: Logan Clustering Cloudformation template for instances
 
 Parameters:
   InstanceTypes:
     Description: EC2 instance types
     Type: List<String>
-    #Default: "c5d.4xlarge,c5d.9xlarge,c5d.12xlarge,c5d.18xlarge,c5d.24xlarge,c5d.metal"
-    Default: "c5d"
+    Default: "c6gd.large" # ARM64
   Minvcpus:
     Type: Number
     Default: 0
     Description: Minimum number of vCPUs per Compute Environment
   Maxvcpus:
     Type: Number
-    Default: 10000 
+    Default: 10
     Description: Maximum number of vCPUs per Compute Environment
   EBSBootSize:
     Type: Number
@@ -43,65 +42,6 @@ Parameters:
 ############################
 ## AWS Batch Infrastructure
 Resources:
-  BatchInstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Sid: ''
-          Effect: Allow
-          Principal:
-            Service: ec2.amazonaws.com
-          Action: sts:AssumeRole
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-      - arn:aws:iam::aws:policy/AmazonS3FullAccess
-      - arn:aws:iam::aws:policy/AmazonElasticMapReduceFullAccess # for sdb
-      - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore # for connecting to instance
-      - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy # for https://github.com/aws-samples/aws-batch-blueprints/blob/main/templates/batch-jq-ce-lt-detailed-monitoring.yaml
-  BatchInstancePolicy: # from https://github.com/aws-samples/aws-batch-blueprints/blob/main/templates/batch-jq-ce-lt-ebs-resize.yaml
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: !Sub 'BatchInstancePolicy-${AWS::StackName}'
-      PolicyDocument:
-        Statement:
-          - Effect: Allow
-            Action:
-              - ec2:CreateVolume
-              - ec2:AttachVolume
-              - ec2:ModifyVolume
-              - ec2:DescribeVolumes
-              - ec2:DescribeVolumesModifications
-              - ec2:ModifyInstanceAttribute
-              - logs:CreateLogGroup # for awslogs
-              - dynamodb:UpdateItem
-            Resource:
-              - '*'
-      Roles:
-        - !Ref BatchInstanceRole
-  BatchInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Roles:
-      - Ref: BatchInstanceRole
-  SpotIamFleetRole: # taken from https://github.com/aodn/aws-wps/blob/master/wps-cloudformation-template.yaml
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: spot.amazonaws.com
-            Action: sts:AssumeRole
-          - Effect: Allow
-            Principal:
-              Service: spotfleet.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole
-
   BatchLaunchTemplateDisques:
     Type: 'AWS::EC2::LaunchTemplate'
     Properties:
@@ -163,93 +103,14 @@ Resources:
         MinvCpus: !Ref Minvcpus
         MaxvCpus: !Ref Maxvcpus
         Type: SPOT 
-        InstanceRole:
-          Ref: BatchInstanceProfile
+        InstanceRole: arn:aws:iam::797308887321:instance-profile/Logan-AnalysisDisques-BatchInstanceProfile-A3PIIioGLk7D
         InstanceTypes: !Ref InstanceTypes
-        ImageId: ami-09f62d2604cc5b8fe # my custom Logan AMI (has awscliv2, mdadm) 
-        Ec2KeyPair: "serratus"
-        SpotIamFleetRole: !Ref SpotIamFleetRole
+        ImageId: ami-07c0517613d0845d3 # amzn2-ami-hvm-2.0.20250108.0-arm64-gp2
+        Ec2KeyPair: "serratus-joey-private-key-setup-by-rayan"
+        SpotIamFleetRole: arn:aws:iam::797308887321:role/Logan-AnalysisDisques-SpotIamFleetRole-oa1vO7rRnII9
         Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
         Tags:
-          Name: Logan-Analysis-SPOTD-1
-        SecurityGroupIds:
-        - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
-      ReplaceComputeEnvironment: false
-      State: ENABLED
-
-  BatchECSCED2:
-    Type: AWS::Batch::ComputeEnvironment
-    Properties:
-      Type: MANAGED
-      ComputeResources:
-        AllocationStrategy: SPOT_PRICE_CAPACITY_OPTIMIZED
-        LaunchTemplate:
-            LaunchTemplateId: !Ref BatchLaunchTemplateDisques
-            Version: !GetAtt BatchLaunchTemplateDisques.LatestVersionNumber
-        MinvCpus: !Ref Minvcpus
-        MaxvCpus: !Ref Maxvcpus
-        Type: SPOT 
-        InstanceRole:
-          Ref: BatchInstanceProfile
-        InstanceTypes: !Ref InstanceTypes
-        ImageId: ami-09f62d2604cc5b8fe # my custom Logan AMI (has awscliv2, mdadm) 
-        Ec2KeyPair: "serratus"
-        SpotIamFleetRole: !Ref SpotIamFleetRole
-        Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
-        Tags:
-          Name: Logan-Analysis-SPOTD-2
-        SecurityGroupIds:
-        - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
-      ReplaceComputeEnvironment: false
-      State: ENABLED
-
-  BatchECSCED3:
-    Type: AWS::Batch::ComputeEnvironment
-    Properties:
-      Type: MANAGED
-      ComputeResources:
-        AllocationStrategy: SPOT_PRICE_CAPACITY_OPTIMIZED
-        LaunchTemplate:
-            LaunchTemplateId: !Ref BatchLaunchTemplateDisques
-            Version: !GetAtt BatchLaunchTemplateDisques.LatestVersionNumber
-        MinvCpus: !Ref Minvcpus
-        MaxvCpus: !Ref Maxvcpus
-        Type: SPOT 
-        InstanceRole:
-          Ref: BatchInstanceProfile
-        InstanceTypes: !Ref InstanceTypes
-        ImageId: ami-09f62d2604cc5b8fe # my custom Logan AMI (has awscliv2, mdadm) 
-        Ec2KeyPair: "serratus"
-        SpotIamFleetRole: !Ref SpotIamFleetRole
-        Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
-        Tags:
-          Name: Logan-Analysis-SPOTD-3
-        SecurityGroupIds:
-        - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
-      ReplaceComputeEnvironment: false
-      State: ENABLED
-
-  BatchECSCED4:
-    Type: AWS::Batch::ComputeEnvironment
-    Properties:
-      Type: MANAGED
-      ComputeResources:
-        AllocationStrategy: SPOT_PRICE_CAPACITY_OPTIMIZED
-        LaunchTemplate:
-            LaunchTemplateId: !Ref BatchLaunchTemplateDisques
-            Version: !GetAtt BatchLaunchTemplateDisques.LatestVersionNumber
-        MinvCpus: !Ref Minvcpus
-        MaxvCpus: !Ref Maxvcpus
-        Type: SPOT 
-        InstanceRole:
-          Ref: BatchInstanceProfile
-        InstanceTypes: !Ref InstanceTypes
-        ImageId: ami-09f62d2604cc5b8fe # my custom Logan AMI (has awscliv2, mdadm) 
-        Ec2KeyPair: "serratus"
-        SpotIamFleetRole: !Ref SpotIamFleetRole
-        Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
-        Tags:
-          Name: Logan-Analysis-SPOTD-4
+          Name: Logan-Clustering-SPOTD-1
         SecurityGroupIds:
         - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
       ReplaceComputeEnvironment: false
@@ -258,22 +119,18 @@ Resources:
   BatchJobQueue:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: 'LoganAnalysisJobQueueDisques'
+      JobQueueName: 'LoganClusteringJobQueueDisques'
       ComputeEnvironmentOrder:
         - ComputeEnvironment: !Ref BatchECSCED
           Order: 1
-        - ComputeEnvironment: !Ref BatchECSCED2
-          Order: 2
-        - ComputeEnvironment: !Ref BatchECSCED3
-          Order: 3
       Priority: 1
       State: "ENABLED"
 
-  LoganAnalysisOneCoreJobDefinition:
+  LoganClusteringOneCoreJobDefinition:
     Type: AWS::Batch::JobDefinition
     Properties:
       Type: container
-      JobDefinitionName: 'logan-analysis-1c-job' 
+      JobDefinitionName: 'logan-clustering-1c-job' 
       ContainerProperties:
         Image:
           Fn::Join:
@@ -281,7 +138,7 @@ Resources:
           - - Ref: AWS::AccountId
             - .dkr.ecr.
             - Ref: AWS::Region
-            - ".amazonaws.com/logan-analysis-job-x86_64:latest"
+            - ".amazonaws.com/logan-cluster-job-arm64:latest"
         ResourceRequirements:
           - Type: MEMORY
             Value: "1500" # Vcpu/mem ratio of C5's
@@ -303,212 +160,6 @@ Resources:
           - OnReason: "*"
             Action: "EXIT"
 
-  LoganAnalysisOneCoreEightGigsJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      JobDefinitionName: 'logan-analysis-1c-8g-job' 
-      ContainerProperties:
-        Image:
-          Fn::Join:
-          - ''
-          - - Ref: AWS::AccountId
-            - .dkr.ecr.
-            - Ref: AWS::Region
-            - ".amazonaws.com/logan-analysis-job-x86_64:latest"
-        ResourceRequirements:
-          - Type: MEMORY
-            Value: "7500" 
-          - Type: VCPU
-            Value: "1" 
-        MountPoints:
-          - ContainerPath: "/localdisk"
-            ReadOnly: false
-            SourceVolume: localdisk
-        Volumes:
-          - Name: localdisk
-            Host:
-              SourcePath: "/localdisk"
-      RetryStrategy:
-        Attempts: 2
-        EvaluateOnExit:
-          - OnStatusReason: "Host EC2*"
-            Action: "RETRY"
-          - OnReason: "*"
-            Action: "EXIT"
-
-  LoganAnalysisTwoCoresJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      JobDefinitionName: 'logan-analysis-2c-job' 
-      ContainerProperties:
-        Image:
-          Fn::Join:
-          - ''
-          - - Ref: AWS::AccountId
-            - .dkr.ecr.
-            - Ref: AWS::Region
-            - ".amazonaws.com/logan-analysis-job-x86_64:latest"
-        ResourceRequirements:
-          - Type: MEMORY
-            Value: "3500" # Vcpu/mem ratio of C5's
-          - Type: VCPU
-            Value: "2" 
-        MountPoints:
-          - ContainerPath: "/localdisk"
-            ReadOnly: false
-            SourceVolume: localdisk
-        Volumes:
-          - Name: localdisk
-            Host:
-              SourcePath: "/localdisk"
-      RetryStrategy:
-        Attempts: 2
-        EvaluateOnExit:
-          - OnStatusReason: "Host EC2*"
-            Action: "RETRY"
-          - OnReason: "*"
-            Action: "EXIT"
-
-  LoganAnalysisFourCoresJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      JobDefinitionName: 'logan-analysis-4c-job' 
-      ContainerProperties:
-        Image:
-          Fn::Join:
-          - ''
-          - - Ref: AWS::AccountId
-            - .dkr.ecr.
-            - Ref: AWS::Region
-            - ".amazonaws.com/logan-analysis-job-x86_64:latest"
-        ResourceRequirements:
-          - Type: MEMORY
-            Value: "6500" # Vcpu/mem ratio of C5's
-          - Type: VCPU
-            Value: "4"
-        MountPoints:
-          - ContainerPath: "/localdisk"
-            ReadOnly: false
-            SourceVolume: localdisk
-        Volumes:
-          - Name: localdisk
-            Host:
-              SourcePath: "/localdisk"
-      RetryStrategy:
-        Attempts: 2
-        EvaluateOnExit:
-          - OnStatusReason: "Host EC2*"
-            Action: "RETRY"
-          - OnReason: "*"
-            Action: "EXIT"
-
-  LoganAnalysisEightCoresJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      JobDefinitionName: 'logan-analysis-8c-job' 
-      ContainerProperties:
-        Image:
-          Fn::Join:
-          - ''
-          - - Ref: AWS::AccountId
-            - .dkr.ecr.
-            - Ref: AWS::Region
-            - ".amazonaws.com/logan-analysis-job-x86_64:latest"
-        ResourceRequirements:
-          - Type: MEMORY
-            Value: "13000" # Vcpu/mem ratio of C5's
-          - Type: VCPU
-            Value: "8"
-        MountPoints:
-          - ContainerPath: "/localdisk"
-            ReadOnly: false
-            SourceVolume: localdisk
-        Volumes:
-          - Name: localdisk
-            Host:
-              SourcePath: "/localdisk"
-      RetryStrategy:
-        Attempts: 2
-        EvaluateOnExit:
-          - OnStatusReason: "Host EC2*"
-            Action: "RETRY"
-          - OnReason: "*"
-            Action: "EXIT"
-
-
-  LoganAnalysisSixteenCoresJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      JobDefinitionName: 'logan-analysis-16c-job' 
-      ContainerProperties:
-        Image:
-          Fn::Join:
-          - ''
-          - - Ref: AWS::AccountId
-            - .dkr.ecr.
-            - Ref: AWS::Region
-            - ".amazonaws.com/logan-analysis-job-x86_64:latest"
-        ResourceRequirements:
-          - Type: MEMORY
-            Value: "31000" # Vcpu/mem ratio of C5's
-          - Type: VCPU
-            Value: "16"
-        MountPoints:
-          - ContainerPath: "/localdisk"
-            ReadOnly: false
-            SourceVolume: localdisk
-        Volumes:
-          - Name: localdisk
-            Host:
-              SourcePath: "/localdisk"
-      RetryStrategy:
-        Attempts: 2
-        EvaluateOnExit:
-          - OnStatusReason: "Host EC2*"
-            Action: "RETRY"
-          - OnReason: "*"
-            Action: "EXIT"
-
-  LoganAnalysisThirtyTwoCoresJobDefinition:
-    Type: AWS::Batch::JobDefinition
-    Properties:
-      Type: container
-      JobDefinitionName: 'logan-analysis-32c-job' 
-      ContainerProperties:
-        Image:
-          Fn::Join:
-          - ''
-          - - Ref: AWS::AccountId
-            - .dkr.ecr.
-            - Ref: AWS::Region
-            - ".amazonaws.com/logan-analysis-job-x86_64:latest"
-        ResourceRequirements:
-          - Type: MEMORY
-            Value: "62000" # Vcpu/mem ratio of C5's
-          - Type: VCPU
-            Value: "32"
-        MountPoints:
-          - ContainerPath: "/localdisk"
-            ReadOnly: false
-            SourceVolume: localdisk
-        Volumes:
-          - Name: localdisk
-            Host:
-              SourcePath: "/localdisk"
-      RetryStrategy:
-        Attempts: 2
-        EvaluateOnExit:
-          - OnStatusReason: "Host EC2*"
-            Action: "RETRY"
-          - OnReason: "*"
-            Action: "EXIT"
-
-
 
 #############
 ## Outputs ##
@@ -516,9 +167,5 @@ Resources:
 Outputs:
   ComputeEnvironment:
     Value: !Ref BatchECSCED
-  ComputeEnvironment:
-    Value: !Ref BatchECSCED2
-  ComputeEnvironment:
-    Value: !Ref BatchECSCED3
   JobQueue:
     Value: !Ref BatchJobQueue
