@@ -4,7 +4,7 @@
 # =====================================
 set -euo pipefail
 
-mkdir logan-cluster-run && cd logan-cluster-run
+mkdir /localdisk/logan-cluster-run && cd /localdisk/logan-cluster-run
 
 echo "Logan cluster"
 # get instance type
@@ -23,8 +23,8 @@ jobid=$padded_number
 s3fastaprefix="s3://serratus-rayan/beetles/logan_oct7_run/prodigal-concat/"
 
 inputfilename="inputfile.txt"
-s3inputfile="s3://logan-cluster/input/human/complete/${inputfilename}"
-s3resultprefix="s3://logan-cluster/output/human/complete/"
+s3inputfile="s3://logan-cluster/input/${inputfilename}"
+s3resultprefix="s3://logan-cluster/output/"
 
 echo "START: DOWNLOAD INPUTFILE"
 aws s3 cp "${s3inputfile}" .
