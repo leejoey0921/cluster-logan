@@ -4,7 +4,7 @@
 # =====================================
 set -euo pipefail
 
-mkdir logan-cluster-run && cd logan-cluster-run
+mkdir /localdisk/logan-cluster-run && cd /localdisk/logan-cluster-run
 
 echo "Logan cluster"
 # get instance type
@@ -20,11 +20,11 @@ echo "Array job: ${AWS_BATCH_JOB_ARRAY_INDEX-}"
 printf -v padded_number "%05d" "${AWS_BATCH_JOB_ARRAY_INDEX-}"
 jobid=$padded_number
 
-s3fastaprefix="s3://logan-cluster/test/"
+s3fastaprefix="s3://serratus-rayan/beetles/logan_oct7_run/prodigal-concat/"
 
 inputfilename="inputfile.txt"
-s3inputfile="s3://logan-cluster/test/${inputfilename}"
-s3resultprefix="s3://logan-cluster/test/"
+s3inputfile="s3://logan-cluster/input/${inputfilename}"
+s3resultprefix="s3://logan-cluster/output/"
 
 echo "START: DOWNLOAD INPUTFILE"
 aws s3 cp "${s3inputfile}" .
@@ -62,7 +62,7 @@ while read -r fname; do
 done < jobfiles.txt
 echo "COMPLETE: DOWNLOAD FASTAS"
 
-MAX_LINES=350
+MAX_LINES=8500000000
 
 echo "START: SPLIT FASTA"
 mkdir -p split-chunks

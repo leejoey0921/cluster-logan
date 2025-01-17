@@ -25,14 +25,14 @@ Parameters:
   InstanceTypes:
     Description: EC2 instance types
     Type: List<String>
-    Default: "c6gd.large" # ARM64
+    Default: "r6gd.metal" # arm64, 64 cores, 512GiB memory
   Minvcpus:
     Type: Number
     Default: 0
     Description: Minimum number of vCPUs per Compute Environment
   Maxvcpus:
     Type: Number
-    Default: 10
+    Default: 10000
     Description: Maximum number of vCPUs per Compute Environment
   EBSBootSize:
     Type: Number
@@ -105,7 +105,7 @@ Resources:
         Type: SPOT 
         InstanceRole: arn:aws:iam::797308887321:instance-profile/Logan-AnalysisDisques-BatchInstanceProfile-A3PIIioGLk7D
         InstanceTypes: !Ref InstanceTypes
-        ImageId: ami-07c0517613d0845d3 # amzn2-ami-hvm-2.0.20250108.0-arm64-gp2
+        ImageId: ami-0735de0d7bfebab99 # amzn2-ami-ecs-hvm-2.0.20250102-arm64-ebs
         Ec2KeyPair: "serratus-joey-private-key-setup-by-rayan"
         SpotIamFleetRole: arn:aws:iam::797308887321:role/Logan-AnalysisDisques-SpotIamFleetRole-oa1vO7rRnII9
         Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
@@ -126,11 +126,11 @@ Resources:
       Priority: 1
       State: "ENABLED"
 
-  LoganClusteringOneCoreJobDefinition:
+  LoganClusteringSixtyFourCoreJobDefinition:
     Type: AWS::Batch::JobDefinition
     Properties:
       Type: container
-      JobDefinitionName: 'logan-clustering-1c-job' 
+      JobDefinitionName: 'logan-clustering-64c-job' 
       ContainerProperties:
         Image:
           Fn::Join:
@@ -141,9 +141,9 @@ Resources:
             - ".amazonaws.com/logan-cluster-job-arm64:latest"
         ResourceRequirements:
           - Type: MEMORY
-            Value: "1500" # Vcpu/mem ratio of C5's
+            Value: "524288"  # r6gd.metal mem in MiB (512 GiB = 512 * 1024)
           - Type: VCPU
-            Value: "1" 
+            Value: "64"
         MountPoints:
           - ContainerPath: "/localdisk"
             ReadOnly: false
