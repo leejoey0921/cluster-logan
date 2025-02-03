@@ -1,5 +1,7 @@
-# Build MMseqs2 natively on ARM64
-FROM debian:bookworm-slim AS builder
+# Build MMseqs2 natively on x86
+# debian-bullseye instead of bookworm
+# this is to use glibc version supported in amazonlinux:2023 (<= 2.34)
+FROM debian:bullseye-slim AS builder
 RUN apt-get update \
     && apt-get install -y \
       build-essential cmake xxd git wget \
@@ -7,10 +9,9 @@ RUN apt-get update \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/build
-RUN git clone https://github.com/ChunShow/MMseqs2.git; cd MMseqs2; \
-    git checkout -b new_linclust origin/new_linclust; \
+RUN git clone https://github.com/soedinglab/MMseqs2.git; cd MMseqs2; \
     mkdir build; cd build; \
-    cmake -DHAVE_ARM8=1 -DHAVE_MPI=0 -DHAVE_TESTS=0 -DCMAKE_BUILD_TYPE=Release \
+    cmake -DHAVE_AVX2=1 -DHAVE_MPI=0 -DHAVE_TESTS=0 -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=OFF -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++" \
         -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" -DCMAKE_INSTALL_PREFIX=. ..; \
     make -j $(nproc --all);
@@ -32,16 +33,17 @@ LABEL container.description="logan-analysis-base image"
 LABEL software.license="MIT"
 LABEL tags="logan"
 
-# Update Core
-RUN yum -y update
-RUN yum -y install bash wget time unzip zstd \
-           which sudo jq tar bzip2 grep git
+# Update and install dependencies
+RUN dnf -y update && \
+    dnf -y install bash wget time unzip zstd \
+    which sudo jq tar bzip2 grep git
+
 RUN python3 -m ensurepip
 
 # AWS S3
 ENV PIP_ROOT_USER_ACTION=ignore
 RUN pip3 install boto3
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" && \
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip &&\
     ./aws/install
 
