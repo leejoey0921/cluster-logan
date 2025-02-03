@@ -1,4 +1,4 @@
-# Build MMseqs2 natively on ARM64
+# Build MMseqs2 natively on x86
 # debian-bullseye instead of bookworm
 # this is to use glibc version supported in amazonlinux:2023 (<= 2.34)
 FROM debian:bullseye-slim AS builder
@@ -11,7 +11,7 @@ RUN apt-get update \
 WORKDIR /opt/build
 RUN git clone https://github.com/soedinglab/MMseqs2.git; cd MMseqs2; \
     mkdir build; cd build; \
-    cmake -DHAVE_ARM8=1 -DHAVE_MPI=0 -DHAVE_TESTS=0 -DCMAKE_BUILD_TYPE=Release \
+    cmake -DHAVE_AVX2=1 -DHAVE_MPI=0 -DHAVE_TESTS=0 -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=OFF -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++" \
         -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" -DCMAKE_INSTALL_PREFIX=. ..; \
     make -j $(nproc --all);
@@ -43,13 +43,13 @@ RUN python3 -m ensurepip
 # AWS S3
 ENV PIP_ROOT_USER_ACTION=ignore
 RUN pip3 install boto3
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" && \
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip &&\
     ./aws/install
 
 
 # Copy Scripts
-COPY human-partial.sh /
+COPY logan-cluster.sh /
 
 # (for local testing ; will be already mounted in Batch production)
 RUN mkdir -p /localdisk
@@ -61,11 +61,11 @@ RUN mkdir -p /localdisk
 # because I don't want to test the edge cases where a filesize is around
 # the part limit.
 # Configure AWS Locally
-RUN chmod 755 human-partial.sh  \
+RUN chmod 755 logan-cluster.sh  \
  && aws configure set default.region us-east-1 \
  && aws configure set default.s3.multipart_threshold 4GB \
  && aws configure set default.s3.multipart_chunksize 4GB
 #==========================================================
 # ENTRYPOINT ==============================================
 #==========================================================
-ENTRYPOINT ["./human-partial.sh"]
+ENTRYPOINT ["./logan-cluster.sh"]

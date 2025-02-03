@@ -1,4 +1,4 @@
-# Build MMseqs2 natively on x86
+# Build MMseqs2 natively on ARM64
 # debian-bullseye instead of bookworm
 # this is to use glibc version supported in amazonlinux:2023 (<= 2.34)
 FROM debian:bullseye-slim AS builder
@@ -11,7 +11,7 @@ RUN apt-get update \
 WORKDIR /opt/build
 RUN git clone https://github.com/soedinglab/MMseqs2.git; cd MMseqs2; \
     mkdir build; cd build; \
-    cmake -DHAVE_AVX2=1 -DHAVE_MPI=0 -DHAVE_TESTS=0 -DCMAKE_BUILD_TYPE=Release \
+    cmake -DHAVE_ARM8=1 -DHAVE_MPI=0 -DHAVE_TESTS=0 -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=OFF -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++" \
         -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" -DCMAKE_INSTALL_PREFIX=. ..; \
     make -j $(nproc --all);
@@ -43,7 +43,7 @@ RUN python3 -m ensurepip
 # AWS S3
 ENV PIP_ROOT_USER_ACTION=ignore
 RUN pip3 install boto3
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip &&\
     ./aws/install
 
