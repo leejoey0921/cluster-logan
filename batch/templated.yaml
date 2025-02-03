@@ -22,10 +22,14 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Logan Clustering Cloudformation template for instances
 
 Parameters:
+  LargeInstanceTypes:
+    Description: EC2 large instance types
+    Type: List<String>
+    Default: "r6id.metal,r6idn.metal" 
   InstanceTypes:
     Description: EC2 instance types
     Type: List<String>
-    Default: "r6gd.metal" # arm64, 64 cores, 512GiB memory
+    Default: "x2gd.metal" # r6gd.metal,r6gd.16xlarge,r7gd.metal,r7gd.16xlarge,x2gd.metal,i4g.16xlarge
   Minvcpus:
     Type: Number
     Default: 0
@@ -67,7 +71,7 @@ Resources:
 
                 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
-                yum install -y jq mdadm
+                yum install -y jq mdadm htop sysstat
 
                 MOUNT_POINT="/localdisk"
                 mkdir -p $MOUNT_POINT
@@ -77,11 +81,11 @@ Resources:
 
                 if [[ $nb_devices > 1 ]]; then
                   yes | mdadm --create --verbose /dev/md0 --level=0 --raid-devices=$nb_devices $devices
-                  mkfs.xfs /dev/md0
-                  mount /dev/md0 $MOUNT_POINT
+                  mkfs.ext4 /dev/md0
+                  mount -o defaults,noatime,nodiratime,data=writeback,barrier=0,commit=60,lazytime,discard /dev/md0 $MOUNT_POINT 
                 else
-                  mkfs.xfs $devices
-                  mount $devices $MOUNT_POINT
+                  mkfs.ext4 $devices
+                  mount -o defaults,noatime,nodiratime,data=writeback,barrier=0,commit=60,lazytime,discard $devices $MOUNT_POINT 
                 fi
 
                 # brice's trick
@@ -126,6 +130,75 @@ Resources:
       Priority: 1
       State: "ENABLED"
 
+  LoganClusteringNonhumanPartialJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      JobDefinitionName: 'logan-clustering-nonhuman-partial-job' 
+      ContainerProperties:
+        Image:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::AccountId
+            - .dkr.ecr.
+            - Ref: AWS::Region
+            - ".amazonaws.com/logan-cluster-job-nonhuman-partial-arm64:latest"
+        ResourceRequirements:
+          - Type: MEMORY
+            Value: "1000000"  # r6gd.metal mem in MiB (512 GiB = 512 * 1024)
+          - Type: VCPU
+            Value: "63"
+        MountPoints:
+          - ContainerPath: "/localdisk"
+            ReadOnly: false
+            SourceVolume: localdisk
+        Volumes:
+          - Name: localdisk
+            Host:
+              SourcePath: "/localdisk"
+      RetryStrategy:
+        Attempts: 2
+        EvaluateOnExit:
+          - OnStatusReason: "Host EC2*" # Host EC2 Terminated
+            Action: "RETRY"
+          - OnReason: "*"
+            Action: "EXIT"
+
+  LoganClusteringHumanPartialJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      JobDefinitionName: 'logan-clustering-human-partial-job' 
+      ContainerProperties:
+        Image:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::AccountId
+            - .dkr.ecr.
+            - Ref: AWS::Region
+            - ".amazonaws.com/logan-cluster-job-human-partial-arm64:latest"
+        ResourceRequirements:
+          - Type: MEMORY
+            Value: "1000000"  # r6gd.metal mem in MiB (512 GiB = 512 * 1024)
+          - Type: VCPU
+            Value: "63"
+        MountPoints:
+          - ContainerPath: "/localdisk"
+            ReadOnly: false
+            SourceVolume: localdisk
+        Volumes:
+          - Name: localdisk
+            Host:
+              SourcePath: "/localdisk"
+      RetryStrategy:
+        Attempts: 2
+        EvaluateOnExit:
+          - OnStatusReason: "Host EC2*" # Host EC2 Terminated
+            Action: "RETRY"
+          - OnReason: "*"
+            Action: "EXIT"
+
+
   LoganClusteringSixtyFourCoreJobDefinition:
     Type: AWS::Batch::JobDefinition
     Properties:
@@ -141,9 +214,9 @@ Resources:
             - ".amazonaws.com/logan-cluster-job-arm64:latest"
         ResourceRequirements:
           - Type: MEMORY
-            Value: "524288"  # r6gd.metal mem in MiB (512 GiB = 512 * 1024)
+            Value: "1000000"  # r6gd.metal mem in MiB (512 GiB = 512 * 1024)
           - Type: VCPU
-            Value: "64"
+            Value: "63"
         MountPoints:
           - ContainerPath: "/localdisk"
             ReadOnly: false
@@ -155,7 +228,76 @@ Resources:
       RetryStrategy:
         Attempts: 2
         EvaluateOnExit:
-          - OnStatusReason: "Host EC2*"
+          - OnStatusReason: "Host EC2*" # Host EC2 Terminated
+            Action: "RETRY"
+          - OnReason: "*"
+            Action: "EXIT"
+
+  LargeBatchECSCED:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      Type: MANAGED
+      ComputeResources:
+        AllocationStrategy: SPOT_PRICE_CAPACITY_OPTIMIZED
+        LaunchTemplate:
+            LaunchTemplateId: !Ref BatchLaunchTemplateDisques
+            Version: !GetAtt BatchLaunchTemplateDisques.LatestVersionNumber
+        MinvCpus: !Ref Minvcpus
+        MaxvCpus: !Ref Maxvcpus
+        Type: SPOT 
+        InstanceRole: arn:aws:iam::797308887321:instance-profile/Logan-AnalysisDisques-BatchInstanceProfile-A3PIIioGLk7D
+        InstanceTypes: !Ref LargeInstanceTypes
+        ImageId: ami-00510a0be518b7bcf # amzn2-ami-ecs-hvm-2.0.20250102-x86_64-ebs
+        Ec2KeyPair: "serratus-joey-private-key-setup-by-rayan"
+        SpotIamFleetRole: arn:aws:iam::797308887321:role/Logan-AnalysisDisques-SpotIamFleetRole-oa1vO7rRnII9
+        Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
+        Tags:
+          Name: Logan-Clustering-SPOTD-Large
+        SecurityGroupIds:
+        - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
+      ReplaceComputeEnvironment: false
+      State: ENABLED
+
+  LargeBatchJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: 'LoganClusteringLargeJobQueueDisques'
+      ComputeEnvironmentOrder:
+        - ComputeEnvironment: !Ref LargeBatchECSCED
+          Order: 1
+      Priority: 1
+      State: "ENABLED"
+
+  LoganClusteringLargeJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      JobDefinitionName: 'logan-clustering-large-job' 
+      ContainerProperties:
+        Image:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::AccountId
+            - .dkr.ecr.
+            - Ref: AWS::Region
+            - ".amazonaws.com/logan-cluster-large-job-x86-64:latest"
+        ResourceRequirements:
+          - Type: MEMORY
+            Value: "1000000"
+          - Type: VCPU
+            Value: "127"
+        MountPoints:
+          - ContainerPath: "/localdisk"
+            ReadOnly: false
+            SourceVolume: localdisk
+        Volumes:
+          - Name: localdisk
+            Host:
+              SourcePath: "/localdisk"
+      RetryStrategy:
+        Attempts: 2
+        EvaluateOnExit:
+          - OnStatusReason: "Host EC2*" # Host EC2 Terminated
             Action: "RETRY"
           - OnReason: "*"
             Action: "EXIT"
@@ -169,3 +311,7 @@ Outputs:
     Value: !Ref BatchECSCED
   JobQueue:
     Value: !Ref BatchJobQueue
+  ComputeEnvironment:
+    Value: !Ref LargeBatchECSCED
+  JobQueue:
+    Value: !Ref LargeBatchJobQueue
