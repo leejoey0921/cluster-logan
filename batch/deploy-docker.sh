@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text) # AWS ACCOUNT ID
-DOCKER_CONTAINER=logan-analysis-job-$(uname -m)
+DOCKER_CONTAINER=logan-cluster-job-$(uname -m)
 REPO=${ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/${DOCKER_CONTAINER}
 TAG=build-$(date -u "+%Y-%m-%d")
 echo "Building Docker Image..."
 #NOCACHE=--no-cache
-docker build $NOCACHE -t $DOCKER_CONTAINER .
+docker build $NOCACHE -t $DOCKER_CONTAINER -f ./logan-cluster.Dockerfile .
 
 #echo "Authenticating against AWS ECR..."
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com
