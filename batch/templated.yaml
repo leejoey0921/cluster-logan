@@ -22,10 +22,14 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Logan Clustering Cloudformation template for instances
 
 Parameters:
-  LargeInstanceTypes:
+  LargestInstanceTypes:
+    Description: EC2 largest instance types
+    Type: List<String>
+    Default: "i3en.metal" 
+  MergeTsvInstanceTypes:
     Description: EC2 large instance types
     Type: List<String>
-    Default: "r6id.metal,r6idn.metal" 
+    Default: "i4g.16xlarge" 
   InstanceTypes:
     Description: EC2 instance types
     Type: List<String>
@@ -107,7 +111,7 @@ Resources:
         MinvCpus: !Ref Minvcpus
         MaxvCpus: !Ref Maxvcpus
         Type: SPOT 
-        InstanceRole: arn:aws:iam::797308887321:instance-profile/Logan-AnalysisDisques-BatchInstanceProfile-A3PIIioGLk7D
+        InstanceRole: arn:aws:iam::797308887321:instance-profile/Logan-AnalysisDisques-BatchInstanceProfile-2EuxBP2LNsCx
         InstanceTypes: !Ref InstanceTypes
         ImageId: ami-0735de0d7bfebab99 # amzn2-ami-ecs-hvm-2.0.20250102-arm64-ebs
         Ec2KeyPair: "serratus-joey-private-key-setup-by-rayan"
@@ -198,6 +202,74 @@ Resources:
           - OnReason: "*"
             Action: "EXIT"
 
+  LoganClusteringHumanCompleteJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      JobDefinitionName: 'logan-clustering-human-complete-job' 
+      ContainerProperties:
+        Image:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::AccountId
+            - .dkr.ecr.
+            - Ref: AWS::Region
+            - ".amazonaws.com/logan-cluster-job-human-complete-arm64:latest"
+        ResourceRequirements:
+          - Type: MEMORY
+            Value: "1000000"  # r6gd.metal mem in MiB (512 GiB = 512 * 1024)
+          - Type: VCPU
+            Value: "63"
+        MountPoints:
+          - ContainerPath: "/localdisk"
+            ReadOnly: false
+            SourceVolume: localdisk
+        Volumes:
+          - Name: localdisk
+            Host:
+              SourcePath: "/localdisk"
+      RetryStrategy:
+        Attempts: 2
+        EvaluateOnExit:
+          - OnStatusReason: "Host EC2*" # Host EC2 Terminated
+            Action: "RETRY"
+          - OnReason: "*"
+            Action: "EXIT"
+
+  LoganClusteringNonhumanCompleteJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      JobDefinitionName: 'logan-clustering-nonhuman-complete-job' 
+      ContainerProperties:
+        Image:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::AccountId
+            - .dkr.ecr.
+            - Ref: AWS::Region
+            - ".amazonaws.com/logan-cluster-job-nonhuman-complete-arm64:latest"
+        ResourceRequirements:
+          - Type: MEMORY
+            Value: "500000"  # r6gd.metal mem in MiB (512 GiB = 512 * 1024)
+          - Type: VCPU
+            Value: "63"
+        MountPoints:
+          - ContainerPath: "/localdisk"
+            ReadOnly: false
+            SourceVolume: localdisk
+        Volumes:
+          - Name: localdisk
+            Host:
+              SourcePath: "/localdisk"
+      RetryStrategy:
+        Attempts: 2
+        EvaluateOnExit:
+          - OnStatusReason: "Host EC2*" # Host EC2 Terminated
+            Action: "RETRY"
+          - OnReason: "*"
+            Action: "EXIT"
+
 
   LoganClusteringSixtyFourCoreJobDefinition:
     Type: AWS::Batch::JobDefinition
@@ -233,7 +305,76 @@ Resources:
           - OnReason: "*"
             Action: "EXIT"
 
-  LargeBatchECSCED:
+  LargestBatchECSCED:
+    Type: AWS::Batch::ComputeEnvironment
+    Properties:
+      Type: MANAGED
+      ComputeResources:
+        AllocationStrategy: BEST_FIT
+        LaunchTemplate:
+            LaunchTemplateId: !Ref BatchLaunchTemplateDisques
+            Version: !GetAtt BatchLaunchTemplateDisques.LatestVersionNumber
+        MinvCpus: !Ref Minvcpus
+        MaxvCpus: !Ref Maxvcpus
+        Type: EC2 
+        InstanceRole: arn:aws:iam::797308887321:instance-profile/Logan-AnalysisDisques-BatchInstanceProfile-2EuxBP2LNsCx
+        InstanceTypes: !Ref LargestInstanceTypes
+        ImageId: ami-00510a0be518b7bcf # amzn2-ami-ecs-hvm-2.0.20250102-x86_64-ebs
+        Ec2KeyPair: "serratus-joey-private-key-setup-by-rayan"
+        # SpotIamFleetRole: arn:aws:iam::797308887321:role/Logan-AnalysisDisques-SpotIamFleetRole-oa1vO7rRnII9
+        Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
+        Tags:
+          Name: Logan-Clustering-SPOTD-Largest
+        SecurityGroupIds:
+        - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
+      ReplaceComputeEnvironment: false
+      State: ENABLED
+
+  LargestBatchJobQueue:
+    Type: AWS::Batch::JobQueue
+    Properties:
+      JobQueueName: 'LoganClusteringLargestJobQueueDisques'
+      ComputeEnvironmentOrder:
+        - ComputeEnvironment: !Ref LargestBatchECSCED
+          Order: 1
+      Priority: 1
+      State: "ENABLED"
+
+  LoganClusteringLargestJobDefinition:
+    Type: AWS::Batch::JobDefinition
+    Properties:
+      Type: container
+      JobDefinitionName: 'logan-clustering-largest-job' 
+      ContainerProperties:
+        Image:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::AccountId
+            - .dkr.ecr.
+            - Ref: AWS::Region
+            - ".amazonaws.com/logan-cluster-largest-job-x86_64:latest"
+        ResourceRequirements:
+          - Type: MEMORY
+            Value: "1000000"
+          - Type: VCPU
+            Value: "127"
+        MountPoints:
+          - ContainerPath: "/localdisk"
+            ReadOnly: false
+            SourceVolume: localdisk
+        Volumes:
+          - Name: localdisk
+            Host:
+              SourcePath: "/localdisk"
+      RetryStrategy:
+        Attempts: 2
+        EvaluateOnExit:
+          - OnStatusReason: "Host EC2*" # Host EC2 Terminated
+            Action: "RETRY"
+          - OnReason: "*"
+            Action: "EXIT"
+
+  MergeTsvBatchECSCED:
     Type: AWS::Batch::ComputeEnvironment
     Properties:
       Type: MANAGED
@@ -245,34 +386,34 @@ Resources:
         MinvCpus: !Ref Minvcpus
         MaxvCpus: !Ref Maxvcpus
         Type: SPOT 
-        InstanceRole: arn:aws:iam::797308887321:instance-profile/Logan-AnalysisDisques-BatchInstanceProfile-A3PIIioGLk7D
-        InstanceTypes: !Ref LargeInstanceTypes
-        ImageId: ami-00510a0be518b7bcf # amzn2-ami-ecs-hvm-2.0.20250102-x86_64-ebs
+        InstanceRole: arn:aws:iam::797308887321:instance-profile/Logan-AnalysisDisques-BatchInstanceProfile-2EuxBP2LNsCx
+        InstanceTypes: !Ref MergeTsvInstanceTypes
+        ImageId: ami-0735de0d7bfebab99 # amzn2-ami-ecs-hvm-2.0.20250102-arm64-ebs
         Ec2KeyPair: "serratus-joey-private-key-setup-by-rayan"
         SpotIamFleetRole: arn:aws:iam::797308887321:role/Logan-AnalysisDisques-SpotIamFleetRole-oa1vO7rRnII9
         Subnets: !Split [",", !ImportValue 'Logan-LargeScaleVPC-PrivateSubnets']
         Tags:
-          Name: Logan-Clustering-SPOTD-Large
+          Name: Logan-Clustering-SPOTD-MergeTsv
         SecurityGroupIds:
         - !ImportValue 'Logan-LargeScaleVPC-SecurityGroup'
       ReplaceComputeEnvironment: false
       State: ENABLED
 
-  LargeBatchJobQueue:
+  MergeTsvBatchJobQueue:
     Type: AWS::Batch::JobQueue
     Properties:
-      JobQueueName: 'LoganClusteringLargeJobQueueDisques'
+      JobQueueName: 'LoganClusteringMergeTsvJobQueueDisques'
       ComputeEnvironmentOrder:
-        - ComputeEnvironment: !Ref LargeBatchECSCED
+        - ComputeEnvironment: !Ref MergeTsvBatchECSCED
           Order: 1
       Priority: 1
       State: "ENABLED"
 
-  LoganClusteringLargeJobDefinition:
+  LoganClusteringMergeTsvJobDefinition:
     Type: AWS::Batch::JobDefinition
     Properties:
       Type: container
-      JobDefinitionName: 'logan-clustering-large-job' 
+      JobDefinitionName: 'logan-clustering-mergetsv-job' 
       ContainerProperties:
         Image:
           Fn::Join:
@@ -280,12 +421,12 @@ Resources:
           - - Ref: AWS::AccountId
             - .dkr.ecr.
             - Ref: AWS::Region
-            - ".amazonaws.com/logan-cluster-large-job-x86-64:latest"
+            - ".amazonaws.com/logan-cluster-job-human-partial-mergetsv-x86_64:latest"
         ResourceRequirements:
           - Type: MEMORY
-            Value: "1000000"
+            Value: "750000"
           - Type: VCPU
-            Value: "127"
+            Value: "95"
         MountPoints:
           - ContainerPath: "/localdisk"
             ReadOnly: false
@@ -312,6 +453,10 @@ Outputs:
   JobQueue:
     Value: !Ref BatchJobQueue
   ComputeEnvironment:
-    Value: !Ref LargeBatchECSCED
+    Value: !Ref MergeTsvBatchECSCED
   JobQueue:
-    Value: !Ref LargeBatchJobQueue
+    Value: !Ref MergeTsvBatchJobQueue
+  ComputeEnvironment:
+    Value: !Ref LargestBatchECSCED
+  JobQueue:
+    Value: !Ref LargestBatchJobQueue

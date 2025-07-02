@@ -1,6 +1,6 @@
 #!/bin/bash
 # ENTRYPOINT SCRIPT ===================
-# logan-cluster.sh
+# logan-cluster-shuffled.sh
 # =====================================
 set -euo pipefail
 
@@ -22,11 +22,11 @@ echo "Array job: ${AWS_BATCH_JOB_ARRAY_INDEX-}"
 printf -v padded_number "%05d" "${AWS_BATCH_JOB_ARRAY_INDEX-}"
 jobid=$padded_number
 
-s3fastaprefix="s3://logan-cluster/first/nonhuman/partial/fa/"
+s3fastaprefix="s3://logan-cluster/third/human/partial/fa/"
 
-inputfilename="nonhuman-partial.txt"
-s3inputfile="s3://logan-cluster/second/nonhuman/partial/${inputfilename}"
-s3resultprefix="s3://logan-cluster/second/nonhuman/partial/"
+inputfilename="human-partial.txt"
+s3inputfile="s3://logan-cluster/fourth/human/partial/${inputfilename}"
+s3resultprefix="s3://logan-cluster/fourth/human/partial/"
 
 echo "START: DOWNLOAD INPUTFILE"
 aws s3 cp "${s3inputfile}" . --no-progress
@@ -65,7 +65,7 @@ done < jobfiles.txt
 echo "COMPLETE: DOWNLOAD FASTAS"
 df -h / /localdisk
 
-MAX_LINES=3000000000
+MAX_LINES=300000000 # 1/10 of original
 
 echo "START: SPLIT FASTA"
 mkdir -p split-chunks
@@ -74,19 +74,62 @@ mkdir -p split-chunks
     cat "$f"
     rm "$f"
   done
-) | split -l "$MAX_LINES" -d -a 3 - split-chunks/split-
+) | split -l "$MAX_LINES" -d -a 4 - split-chunks/split-
 
 for f in split-chunks/split-*; do
     mv "$f" "$f.fa"
 done
 echo "COMPLETE: SPLIT FASTA"
-du -sh split-chunks/split-*.fa
+
+echo "START: MIX FASTA"
+all_splits=( $(ls "split-chunks" | sort -V) )
+
+split_cnt=${#all_splits[@]}
+group_cnt=$(( (split_cnt + 10 - 1) / 10 )) # ceil(N/10) groups
+merge_idx=1
+
+for (( i=0; i < group_cnt; i++ )); do
+  # Collect up to 10 indices
+  group_indices=()
+  for (( k=0; k < 10; k++ )); do
+    idx=$(( i + 1 + k * group_cnt ))
+    if [ "$idx" -le "$split_cnt" ]; then
+      group_indices+=( "$idx" )
+    else
+      break
+    fi
+  done
+
+  if [ ${#group_indices[@]} -eq 0 ]; then
+    continue
+  fi
+
+  group_splits=()
+  for idx in "${group_indices[@]}"; do
+    group_splits+=( "split-chunks/${all_splits[$((idx - 1))]}" )
+  done
+
+  out_file="split-chunks/merged-split-$(printf "%03d" $merge_idx).fa"
+
+  echo "Creating $out_file by merging:"
+  for f in "${group_splits[@]}"; do
+    echo "  $f"
+  done
+
+  cat "${group_splits[@]}" > "$out_file"
+  rm -f "${group_splits[@]}"
+
+  ((merge_idx++))
+done
+echo "COMPLETE: MIX FASTA"
+
+du -sh split-chunks/merged-split-*.fa
 df -h / /localdisk
 
 mkdir -p result/tsv result/fa
 
 i=0
-for split_file in split-chunks/split-*.fa; do
+for split_file in split-chunks/merged-split-*.fa; do
     mkdir db tmp
 
     db="db/db"
@@ -100,7 +143,7 @@ for split_file in split-chunks/split-*.fa; do
     echo "COMPLETE: CREATEDB ${i}"
 
     echo "START: CLUSTER ${i}"
-    time mmseqs linclust "$db" "$clu" tmp -c 0.9 --cov-mode 1 --min-seq-id 0.9 --remove-tmp-files 1 --split-memory-limit 700G --threads 63
+    time mmseqs linclust "$db" "$clu" tmp -c 0.9 --cov-mode 1 --min-seq-id 0.5 --remove-tmp-files 1 --split-memory-limit 700G --threads 63
     echo "COMPLETE: CLUSTER ${i}"
 
     echo "START: STORE CLUSTER TSV ${i} TO S3"
