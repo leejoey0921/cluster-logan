@@ -35,7 +35,7 @@ LABEL tags="logan"
 
 # Update and install dependencies
 RUN dnf -y update && \
-    dnf -y install bash wget time unzip zstd \
+    dnf -y install bash wget time unzip zstd parallel \
     which sudo jq tar bzip2 grep git
 
 RUN python3 -m ensurepip
@@ -49,7 +49,7 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv
 
 
 # Copy Scripts
-COPY logan-cluster.sh /
+COPY logan-merge-tsv-human-complete.sh /
 
 # (for local testing ; will be already mounted in Batch production)
 RUN mkdir -p /localdisk
@@ -61,11 +61,11 @@ RUN mkdir -p /localdisk
 # because I don't want to test the edge cases where a filesize is around
 # the part limit.
 # Configure AWS Locally
-RUN chmod 755 logan-cluster.sh  \
+RUN chmod 755 logan-merge-tsv-human-complete.sh \
  && aws configure set default.region us-east-1 \
  && aws configure set default.s3.multipart_threshold 4GB \
  && aws configure set default.s3.multipart_chunksize 4GB
 #==========================================================
 # ENTRYPOINT ==============================================
 #==========================================================
-ENTRYPOINT ["./logan-cluster.sh"]
+ENTRYPOINT ["./logan-merge-tsv-human-complete.sh"]
